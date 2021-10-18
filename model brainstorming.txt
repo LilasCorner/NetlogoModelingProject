@@ -1,0 +1,11 @@
+trying to model the twitter follow suggestion system?
+
+- nodes start as a complete graph
+- nodes have internal states of interests (idk 3ish or more with numeric value indicating strenght of interest)
+- nodes can see # followers another node has
+- directed = person follows, not followed back etc
+- every turn, nodes decide to break/make connections with other nodes of similar interests
+	- they make connections with those of similar interest
+	- they break if they realize another interest is stronger than the one they followed for
+
+- the node's opinion changes based on those it follows -- the higher the follower count of the other node, the stronger the influence on the change.
