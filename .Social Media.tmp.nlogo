@@ -156,12 +156,13 @@ HORIZONTAL
 
 
 ## HOW IT WORKS
-- turtles make/break connections based on interest level
-- they make and keep connection with turtles of similar interest/ >= their own interest level
- - they break connections if interest level < their current interest level
- - their interest changes based off the most "popular" turtle they follow 
-- we ++ the shared interest between the popular and normie turtle, and -- any interests the normal turtle has that popular turtle doesnt share
-- maybe if turtle has no followers after certain number of ticks they die/leave app?
+-turtles make/break connections based on interest level
+-they make and keep connection with turtles of similar interest/ >= their own interest level
+ -they break connections if interest level < their current interest level
+ their interest changes based off the most "popular" turtle they follow
+ we ++ the shared interest between the popular and normie turtle, and -- any interests the normal turtle has
+ ...that popular turtle doesnt share
+ maybe if turtle has no followers after certain number of ticks they die/leave app?
 
 
 ## HOW TO USE IT

@@ -1,4 +1,4 @@
-trying to model the twitter follow suggestion system?
+trying to model the twitter follow suggestion system and how it influences your own interests
 
 - nodes start as a complete graph
 - nodes have internal states of interests (idk 3ish or more with numeric value indicating strenght of interest)
