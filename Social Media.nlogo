@@ -1,4 +1,4 @@
-breed [ users user ] 
+breed [ users user ]
 ;; Standard users of social media service.
 
 directed-link-breed [ subs sub ]
@@ -7,15 +7,20 @@ directed-link-breed [ subs sub ]
 ;; from who is following to who is followed.
 
 users-own [ ;; Internal variables of users.
-  ;; TO-DO: Determine what variables are needed for users, if any.
-
   interests
   ;; List of floats representing strength of interests,
   ;; with index corresponding to a particular interest.
+
   followers
   ;; List of users that are following the current user.
+
   following
   ;; List of users that the current user is following.
+]
+
+subs-own [ ;; Internal variables of links.
+  age
+  ;; Integer representing the number of ticks the link has existed.
 ]
 
 ;; Setup Procedures
@@ -25,20 +30,26 @@ to setup
   clear-all
 
   set-default-shape users "circle"
+  set-default-shape subs "curved-link"
 
   ;; Initializes users.
   create-users initial-users [
     ;; Creates list showing strength of interests.
     ;; Starting users have equal strengths for each interest.
-    set interests n-values num-of-interests [1 / num-of-interests]
+    set interests n-values num-of-interests [1.0 / num-of-interests]
 
     ;; TO-DO: Have color reflect interests.
-    set color blue
+    let color-angle (360.0 / num-of-interests)
+    set color hsb color-angle (100.0 / num-of-interests) 100
+
     set size 1
   ]
 
+  ask subs [
+    set age 0
+  ]
   ;; Places users in a circular format.
-  layout-circle users (world-width / 2 - 2)
+  layout-circle sort users (world-width / 2 - 2)
   reset-ticks
 end
 
@@ -58,19 +69,43 @@ to go
     stop
   ]
 
-  add-new-user
+  ;; Buffer to add users every ticks.
+  if (ticks mod 25 = 0) [
+    add-new-user
+  ]
 
-  ask one-of users
-    [
-      ;; Follow another user.
-      ;; TO-DO: Create a way for users to determine how they're following.
-      ;; As is, this merely creates a directed link to another random user, period.
-      create-sub-to one-of other users [
-        set color sky
-        set thickness 0.01
+  ;; User procedures
+  ask users [
+    ;; Follow another user.
+    ;; TO-DO: Create a way for users to determine how they're following.
+    ;; As is, this merely creates a directed link to another random user, period.
+    follow-user self one-of other users
+
+    ;; update-color self
+
+    ;; TO-DO: Create a way for users to determine how they're unfollowing.
+    ;; As is, this merely destroys some link to another random user.
+    unfollow-user self one-of other users
+
+    set followers n-values (count my-in-subs) [my-in-subs]
+    set following n-values (count my-out-subs) [my-out-subs]
+    ]
+
+  ;; Link procedures
+  ask subs [ ;; Increment the age of all links.
+    if boredom? [
+      if age > engagement [
+        die
       ]
 
+      set age (age + 1)
+      ;; set color
+
     ]
+
+    layout-circle sort users (world-width / 2 - 2)
+
+  ]
 
   ;; Update interest of all users.
   update-interest
@@ -84,24 +119,50 @@ end
 
 to add-new-user
   ;; TO-DO: Add new user.
-end
-
-to follow-user [follower followed]
-  ask follower [
-    create-sub-to followed
+  create-users 1 [
+    ;; TO-DO: Color
   ]
 end
 
-to unfollow-user [follower followed]
+to follow-user [viewer creator]
+  ask viewer [
+    create-sub-to creator [
+      set color ([color] of creator)
+     set thickness 0.1
+    ]
+  ]
+end
+
+to unfollow-user [viewer creator]
   ;; TO-DO: Unfollow user.
+  ask viewer [
+    if (sub-with creator != nobody) [
+      ask sub-with creator [
+        die
+      ]
+    ]
+  ]
 end
 
 to update-interest
   ;; TO-DO: Update interests of all users.
+  ask users [
+    ;; TO-DO: Change interest list.
+    ;; TO-DO: Update color of users to reflect new interests.
 
-  ;; TO-DO: Update color of user to reflect interest.
+  ]
 end
 
+to update-color [current-user]
+  ask current-user [
+    let x (map [i -> i * sin (360.0 / num-of-interests)] interests)
+    let y (map [i -> i * cos (360.0 / num-of-interests)] interests)
+
+    let meanangle atan mean x mean y
+
+    set color hsb meanangle (mean interests) 100
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 379
@@ -124,8 +185,8 @@ GRAPHICS-WINDOW
 16
 -16
 16
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -156,7 +217,7 @@ initial-users
 initial-users
 0
 50
-9.0
+22.0
 1
 1
 users
@@ -193,6 +254,32 @@ NIL
 NIL
 NIL
 1
+
+SWITCH
+8
+198
+118
+231
+boredom?
+boredom?
+0
+1
+-1000
+
+SLIDER
+8
+235
+180
+268
+engagement
+engagement
+0
+100
+0.0
+1
+1
+turns
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -536,7 +623,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
@@ -544,6 +631,17 @@ NetLogo 6.2.0
 @#$#@#$#@
 default
 0.0
+-0.2 0 0.0 1.0
+0.0 1 1.0 0.0
+0.2 0 0.0 1.0
+link direction
+true
+0
+Line -7500403 true 150 150 90 180
+Line -7500403 true 150 150 210 180
+
+curved-link
+5.0
 -0.2 0 0.0 1.0
 0.0 1 1.0 0.0
 0.2 0 0.0 1.0
