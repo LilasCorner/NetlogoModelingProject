@@ -1,72 +1,203 @@
-;; ---------------------------------------
-;; variables
-;; ---------------------------------------
+breed [ users user ]
+;; Standard users of social media service.
+
+directed-link-breed [ subs sub ]
+;; (Shortening of "subscription")
+;; Links representing a follow; direction is
+;; from who is following to who is followed.
+
+globals[
+
+  patience
+
+]
 
 
 
+users-own [ ;; Internal variables of users.
+  interests
+  ;; List of floats representing strength of interests,
+  ;; with index corresponding to a particular interest.
 
+  followers
+  ;; List of users that are following the current user.
 
+  following
+  ;; List of users that the current user is following.
 
-;; ---------------------------------------
-;; setup
-;; ---------------------------------------
-;; create each turtle with it's own unique interests
-;; turtles start with 0 followers, default interest level?
+  boredom
+  ;; Randomly generated int to represent user's boredom of using the app.
+]
+
+subs-own [ ;; Internal variables of links.
+  age
+  ;; Integer representing the number of ticks the link has existed.
+]
+
+;; Setup Procedures
+;; -----------------------------------------------------
 
 to setup
   clear-all
-  set-default-shape turtles "circle"
-  create-turtles number-of-nodes [
-    set color blue
-    set size 2
+
+  set-default-shape users "circle"
+  set-default-shape subs "curved-link"
+
+  ;; Initializes users.
+  create-users initial-users [
+    ;; Creates list showing strength of interests.
+    ;; Starting users have equal strengths for each interest.
+    set interests n-values num-of-interests [1.0 / num-of-interests]
+
+    ;; Sets their boredom level to random float from  0.00 - 1.00
+    set boredom random-float 1.0
+
+    ;; TO-DO: Have color reflect interests.
+    let color-angle (360.0 / num-of-interests)
+    set color hsb color-angle (100.0 / num-of-interests) 100
+
+    set size 1
   ]
-  layout-circle turtles (world-width / 2 - 2)
+
+  ask subs [
+    set age 0
+  ]
+  ;; Places users in a circular format.
+  layout-circle sort users (world-width / 2 - 2)
   reset-ticks
 end
 
+;; Go Procedures
+;; -----------------------------------------------------
 
-
-
-
-
-;; ---------------------------------------
-;; go
-;; ---------------------------------------
-;; turtles make/break connections based on interest level
-;; they make and keep connection with turtles of similar interest/ >= their own interest level
-;; they break connections if interest level < their current interest level
-;; their interest changes based off the most "popular" turtle they follow
+;; Users make/break connections based on interest level
+;; Connections form with users if interest level >= their own interest level
+;; Connections break with users if interest level < their current interest level
+;; User interests update based off the most "popular" turtle they follow
 ;; we ++ the shared interest between the popular and normie turtle, and -- any interests the normal turtle has
 ;; ...that popular turtle doesnt share
-;; maybe if turtle has no followers after certain number of ticks they die/leave app?
+;; Maybe if turtle has no followers after certain number of ticks, they "die" (leave the social media service)?
+
 to go
-  if not any? turtles [ stop ]
-  ask one-of turtles
-    [ create-link-with one-of other turtles ]  ;; if link already exists, nothing happens
-  while [count links > number-of-links]
-    [ ask one-of links [ die ] ]
+  if not any? users [
+    stop
+  ]
+
+  ;; Buffer to add users every ticks.
+  if (ticks mod 25 = 0) [
+    add-new-user
+  ]
+
+  ;; User procedures
+  ask users [
+    ;; Follow another user.
+    ;; TO-DO: Create a way for users to determine how they're following.
+    ;; As is, this merely creates a directed link to another random user, period.
+    follow-user self one-of other users
+
+    ;; update-color self
+
+    ;; TO-DO: Create a way for users to determine how they're unfollowing.
+    ;; As is, this merely destroys some link to another random user.
+    unfollow-user self one-of other users
+
+    set followers n-values (count my-in-subs) [my-in-subs]
+    set following n-values (count my-out-subs) [my-out-subs]
+    ]
+
+  ;; Link procedures
+  ask subs [ ;; Increment the age of all links.
+    if boredom? [
+      if age > engagement [
+        die
+      ]
+
+      set age (age + 1)
+      ;; set color
+
+    ]
+
+    layout-circle sort users (world-width / 2 - 2)
+
+  ]
+
+  ;; Update interest of all users.
+  update-interest
+
+
+
   tick
 end
 
 
+;; Helper Methods
+;; -----------------------------------------------------
 
+to add-new-user
+  ;; TO-DO: Add new user.
+  create-users 1 [
+    ;; TO-DO: Color
+  ]
+end
 
-;; ---------------------------------------
-;; helper methods
-;; ---------------------------------------
-to change-interest
-;;change color to reflect interest
+to follow-user [viewer creator]
+  ask viewer [
+    create-sub-to creator [
+      set color ([color] of creator)
+     set thickness 0.1
+    ]
+  ]
+end
+
+to unfollow-user [viewer creator]
+  ;; TO-DO: Unfollow user.
+  ask viewer [
+    if (sub-with creator != nobody) [
+      ask sub-with creator [
+        die
+      ]
+    ]
+  ]
+end
+
+to update-interest
+  ;; TO-DO: Update interests of all users.
+  ask users [
+    ;; TO-DO: Change interest list.
+    ;; TO-DO: Update color of users to reflect new interests.
+
+  ]
+end
+
+to update-color [current-user]
+  ask current-user [
+    let x (map [i -> i * sin (360.0 / num-of-interests)] interests)
+    let y (map [i -> i * cos (360.0 / num-of-interests)] interests)
+
+    let meanangle atan mean x mean y
+
+    set color hsb meanangle (mean interests) 100
+  ]
+end
+
+to kill-user [current-user]
+
+  ask users [
+    if followers = 0 and boredom = 0.00[
+      die
+    ]
+  ]
 
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-196
+379
 10
-614
-429
+816
+448
 -1
 -1
-10.0
+13.0
 1
 10
 1
@@ -76,10 +207,10 @@ GRAPHICS-WINDOW
 0
 0
 1
--20
-20
--20
-20
+-16
+16
+-16
+16
 1
 1
 1
@@ -87,42 +218,10 @@ ticks
 30.0
 
 BUTTON
-59
-124
-142
-157
-NIL
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-0
-
-SLIDER
+6
 10
-40
-189
-73
-number-of-nodes
-number-of-nodes
-0
-100
-9.0
-1
-1
-NIL
-HORIZONTAL
-
-BUTTON
-62
-82
-139
-115
+69
+43
 NIL
 setup
 NIL
@@ -136,40 +235,125 @@ NIL
 1
 
 SLIDER
-12
-165
-191
-198
-number-of-links
-number-of-links
+6
+49
+184
+82
+initial-users
+initial-users
 0
-100
-20.0
+50
+22.0
+1
+1
+users
+HORIZONTAL
+
+SLIDER
+6
+87
+185
+120
+num-of-interests
+num-of-interests
+0
+10
+3.0
 1
 1
 NIL
 HORIZONTAL
 
+BUTTON
+76
+10
+139
+43
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SWITCH
+8
+198
+118
+231
+boredom?
+boredom?
+0
+1
+-1000
+
+SLIDER
+8
+235
+180
+268
+engagement
+engagement
+0
+100
+0.0
+1
+1
+turns
+HORIZONTAL
+
+MONITOR
+8
+283
+80
+328
+Num Users
+count users
+17
+1
+11
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-
+-(a general understanding of what the model is trying to show or explain)
 
 ## HOW IT WORKS
--turtles make/break connections based on interest level
--they make and keep connection with turtles of similar interest/ >= their own interest level
- -they break connections if interest level < their current interest level
- their interest changes based off the most "popular" turtle they follow
- we ++ the shared interest between the popular and normie turtle, and -- any interests the normal turtle has
- ...that popular turtle doesnt share
- maybe if turtle has no followers after certain number of ticks they die/leave app?
 
+(what rules the agents use to create the overall behavior of the model)
 
 ## HOW TO USE IT
 
+(how to use the model, including a description of each of the items in the Interface tab)
+
 ## THINGS TO NOTICE
 
+(suggested things for the user to notice while running the model)
+
 ## THINGS TO TRY
+
+(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+
+## EXTENDING THE MODEL
+
+(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+
+## NETLOGO FEATURES
+
+(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+
+## RELATED MODELS
+
+(models in the NetLogo Models Library and elsewhere which are of related interest)
+
+## CREDITS AND REFERENCES
+
+(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
 @#$#@#$#@
 default
 true
@@ -363,6 +547,22 @@ Polygon -7500403 true true 135 105 90 60 45 45 75 105 135 135
 Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
+sheep
+false
+15
+Circle -1 true true 203 65 88
+Circle -1 true true 70 65 162
+Circle -1 true true 150 105 120
+Polygon -7500403 true false 218 120 240 165 255 165 278 120
+Circle -7500403 true false 214 72 67
+Rectangle -1 true true 164 223 179 298
+Polygon -1 true true 45 285 30 285 30 240 15 195 45 210
+Circle -1 true true 3 83 150
+Rectangle -1 true true 65 221 80 296
+Polygon -1 true true 195 285 210 285 210 240 240 210 195 210
+Polygon -7500403 true false 276 85 285 105 302 99 294 83
+Polygon -7500403 true false 219 85 210 105 193 99 201 83
+
 square
 false
 0
@@ -447,6 +647,13 @@ Line -7500403 true 40 84 269 221
 Line -7500403 true 40 216 269 79
 Line -7500403 true 84 40 221 269
 
+wolf
+false
+0
+Polygon -16777216 true false 253 133 245 131 245 133
+Polygon -7500403 true true 2 194 13 197 30 191 38 193 38 205 20 226 20 257 27 265 38 266 40 260 31 253 31 230 60 206 68 198 75 209 66 228 65 243 82 261 84 268 100 267 103 261 77 239 79 231 100 207 98 196 119 201 143 202 160 195 166 210 172 213 173 238 167 251 160 248 154 265 169 264 178 247 186 240 198 260 200 271 217 271 219 262 207 258 195 230 192 198 210 184 227 164 242 144 259 145 284 151 277 141 293 140 299 134 297 127 273 119 270 105
+Polygon -7500403 true true -1 195 14 180 36 166 40 153 53 140 82 131 134 133 159 126 188 115 227 108 236 102 238 98 268 86 269 92 281 87 269 103 269 113
+
 x
 false
 0
@@ -461,6 +668,17 @@ NetLogo 6.2.0
 @#$#@#$#@
 default
 0.0
+-0.2 0 0.0 1.0
+0.0 1 1.0 0.0
+0.2 0 0.0 1.0
+link direction
+true
+0
+Line -7500403 true 150 150 90 180
+Line -7500403 true 150 150 210 180
+
+curved-link
+5.0
 -0.2 0 0.0 1.0
 0.0 1 1.0 0.0
 0.2 0 0.0 1.0

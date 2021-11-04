@@ -6,6 +6,14 @@ directed-link-breed [ subs sub ]
 ;; Links representing a follow; direction is
 ;; from who is following to who is followed.
 
+globals[
+
+  patience
+
+]
+
+
+
 users-own [ ;; Internal variables of users.
   interests
   ;; List of floats representing strength of interests,
@@ -16,6 +24,9 @@ users-own [ ;; Internal variables of users.
 
   following
   ;; List of users that the current user is following.
+
+  boredom
+  ;; Randomly generated int to represent user's boredom of using the app.
 ]
 
 subs-own [ ;; Internal variables of links.
@@ -37,6 +48,9 @@ to setup
     ;; Creates list showing strength of interests.
     ;; Starting users have equal strengths for each interest.
     set interests n-values num-of-interests [1.0 / num-of-interests]
+
+    ;; Sets their boredom level to random float from  0.00 - 1.00
+    set boredom random-float 1.0
 
     ;; TO-DO: Have color reflect interests.
     let color-angle (360.0 / num-of-interests)
@@ -110,6 +124,8 @@ to go
   ;; Update interest of all users.
   update-interest
 
+
+
   tick
 end
 
@@ -162,6 +178,16 @@ to update-color [current-user]
 
     set color hsb meanangle (mean interests) 100
   ]
+end
+
+to kill-user [current-user]
+
+  ask users [
+    if followers = 0 and boredom = 0.00[
+      die
+    ]
+  ]
+
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -281,10 +307,21 @@ engagement
 turns
 HORIZONTAL
 
+MONITOR
+8
+283
+80
+328
+Num Users
+count users
+17
+1
+11
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+- (a general understanding of what the model is trying to show or explain)
 
 ## HOW IT WORKS
 
@@ -623,7 +660,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.1
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
