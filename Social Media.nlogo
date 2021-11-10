@@ -10,12 +10,6 @@ users-own [ ;; Internal variables of users.
   interests
   ;; List of floats representing strength of interests,
   ;; with index corresponding to a particular interest.
-
-  followers
-  ;; List of users that are following the current user.
-
-  following
-  ;; List of users that the current user is following.
 ]
 
 subs-own [ ;; Internal variables of links.
@@ -35,12 +29,11 @@ to setup
   ;; Initializes users.
   create-users initial-users [
     ;; Creates list showing strength of interests.
-    ;; Starting users have equal strengths for each interest.
-    set interests n-values num-of-interests [1.0 / num-of-interests]
+    ;; Starting users have randomized intensity of interests.
+    set interests n-values num-of-interests [random-float 1]
 
     ;; TO-DO: Have color reflect interests.
-    let color-angle (360.0 / num-of-interests)
-    set color hsb color-angle (100.0 / num-of-interests) 100
+    update-color self
 
     set size 1
   ]
@@ -70,28 +63,26 @@ to go
   ]
 
   ;; Buffer to add users every ticks.
-  if (ticks mod 25 = 0) [
+  if (ticks mod 50 = 0) [
     add-new-user
   ]
 
-  ;; User procedures
+  ;; User behaviour
   ask users [
     ;; Follow another user.
     ;; TO-DO: Create a way for users to determine how they're following.
     ;; As is, this merely creates a directed link to another random user, period.
-    follow-user self one-of other users
-
-    ;; update-color self
+    follow-users self one-of other users
 
     ;; TO-DO: Create a way for users to determine how they're unfollowing.
     ;; As is, this merely destroys some link to another random user.
-    unfollow-user self one-of other users
+    unfollow-users self one-of other users
 
-    set followers n-values (count my-in-subs) [my-in-subs]
-    set following n-values (count my-out-subs) [my-out-subs]
+
+    update-color self
     ]
 
-  ;; Link procedures
+  ;; Link behaviour
   ask subs [ ;; Increment the age of all links.
     if boredom? [
       if age > engagement [
@@ -118,13 +109,15 @@ end
 ;; -----------------------------------------------------
 
 to add-new-user
-  ;; TO-DO: Add new user.
   create-users 1 [
-    ;; TO-DO: Color
+    set interests n-values num-of-interests [0]
+
+    set interests replace-item (random num-of-interests) interests 1
+    update-color self
   ]
 end
 
-to follow-user [viewer creator]
+to follow-users [viewer creator]
   ask viewer [
     create-sub-to creator [
       set color ([color] of creator)
@@ -133,7 +126,7 @@ to follow-user [viewer creator]
   ]
 end
 
-to unfollow-user [viewer creator]
+to unfollow-users [viewer creator]
   ;; TO-DO: Unfollow user.
   ask viewer [
     if (sub-with creator != nobody) [
@@ -145,22 +138,54 @@ to unfollow-user [viewer creator]
 end
 
 to update-interest
-  ;; TO-DO: Update interests of all users.
+  ;; Takes the entry-wise average of the interests of users with the people they're following.
   ask users [
-    ;; TO-DO: Change interest list.
-    ;; TO-DO: Update color of users to reflect new interests.
+    let average-interests n-values num-of-interests [0]
 
+    ask out-sub-neighbors [
+      set average-interests (map + [interests] of self average-interests)
+    ]
+
+    set interests map [i -> i / (count out-sub-neighbors + 1)] (map + interests average-interests)
+
+    ;; Updates color after changing interests.
+    update-color self
   ]
 end
 
 to update-color [current-user]
+  ;; Updates the color of current-user according to their interests.
+
+  ;; Creates polar vectors equally separated radially in the hue color space.
+  let color-angle map [i -> i * 360.0 / num-of-interests] (range num-of-interests)
+
+  ;; Converts from polar to cartesian.
+  let x-projection map [i -> cos i] color-angle
+  let y-projection map [i -> sin i] color-angle
+
   ask current-user [
-    let x (map [i -> i * sin (360.0 / num-of-interests)] interests)
-    let y (map [i -> i * cos (360.0 / num-of-interests)] interests)
+    ;; Scales cartesian vectors according to interests.
+    let x-scaled (map * interests x-projection)
+    let y-scaled (map * interests y-projection)
 
-    let meanangle atan mean x mean y
+    ;; Calculated average vector.
+    let mean-x mean x-scaled
+    let mean-y mean y-scaled
 
-    set color hsb meanangle (mean interests) 100
+    ;; Conversion from cartesian to polar.
+    let mean-angle
+      ifelse-value (mean-y != 0 and mean-y != 0) [
+        atan mean-x mean-y
+      ] [0] ;; Case for when vector is at the origin.
+
+    let radius sqrt(mean-x ^ 2 + mean-y ^ 2)
+
+    set color hsb mean-angle (300 * radius) 100
+
+    ask my-in-subs [
+      ;; Updates colors of links leading to user.
+      set color [color] of myself
+    ]
   ]
 end
 @#$#@#$#@
@@ -215,9 +240,9 @@ SLIDER
 82
 initial-users
 initial-users
-0
+10
 50
-22.0
+10.0
 1
 1
 users
@@ -230,9 +255,9 @@ SLIDER
 120
 num-of-interests
 num-of-interests
-0
-10
-3.0
+1
+24
+1.0
 1
 1
 NIL
@@ -275,7 +300,7 @@ engagement
 engagement
 0
 100
-0.0
+6.0
 1
 1
 turns
