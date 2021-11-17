@@ -1,15 +1,15 @@
-breed [ users user ]
-;; Standard users of social media service.
-
+breed [ consumers consumer ] ;; Average interests of followed accounts.
+breed [ creators creator ] ;; Average interests of audience.
+breed [ bots bot ] ;; Fixed interests.
 directed-link-breed [ subs sub ]
 ;; (Shortening of "subscription")
 ;; Links representing a follow; direction is
 ;; from who is following to who is followed.
 
-users-own [ ;; Internal variables of users.
+turtles-own [ ;; Internal variables of all accounts.
   interests
   ;; List of floats representing strength of interests,
-  ;; with index corresponding to a particular interest.
+  ;; with interest 'i' in the i-th index.
 ]
 
 subs-own [ ;; Internal variables of links.
@@ -22,28 +22,43 @@ subs-own [ ;; Internal variables of links.
 
 to setup
   clear-all
+  ;; Account shapes
+  set-default-shape consumers "circle"
+  set-default-shape creators "square"
+  set-default-shape bots "lightning"
 
-  set-default-shape users "circle"
+  ;; Link shape
   set-default-shape subs "curved-link"
 
-  ;; Initializes users.
-  create-users initial-users [
-    ;; Creates list showing strength of interests.
-    ;; Starting users have randomized intensity of interests.
-    set interests n-values num-of-interests [random-float 1]
+  ifelse (consumer-proportion + creator-proportion + bot-proportion <= 1) [
+    ;; Initializes accounts.
+    create-consumers (initial-num * consumer-proportion) [
+      set interests n-values num-of-interests [random-float 1]
+      update-account-color self
+      set size 2
+    ]
+    create-creators (initial-num * creator-proportion) [
+      set interests n-values num-of-interests [random-float 1]
+      update-account-color self
+      set size 2
+    ]
+    create-bots (initial-num * bot-proportion) [
+      set interests n-values num-of-interests [random-float 0.5]
+      set interests replace-item (random num-of-interests) interests 1
+      update-account-color self
+      set size 3
+    ]
 
-    ;; TO-DO: Have color reflect interests.
-    update-color self
+    ask subs [
+      set age 0
+    ]
 
-    set size 1
+    ;; Places users in a circular format.
+    layout-circle sort turtles (world-width / 2 - 2)
+    reset-ticks
+  ] [
+    error "Sum of proportions exceed 1.0."
   ]
-
-  ask subs [
-    set age 0
-  ]
-  ;; Places users in a circular format.
-  layout-circle sort users (world-width / 2 - 2)
-  reset-ticks
 end
 
 ;; Go Procedures
@@ -58,43 +73,34 @@ end
 ;; Maybe if turtle has no followers after certain number of ticks, they "die" (leave the social media service)?
 
 to go
-  if not any? users [
+  if not any? turtles [
     stop
   ]
 
-  ;; Buffer to add users every ticks.
-  if (ticks mod 50 = 0) [
-    add-new-user
+  ;; Buffer to add users every X number of ticks.
+  if new-users [
+    if (ticks mod 10 = 0) [
+      add-new-account
+    ]
   ]
-
   ;; User behaviour
-  ask users [
-    ;; Follow another user.
-    ;; TO-DO: Create a way for users to determine how they're following.
-    ;; As is, this merely creates a directed link to another random user, period.
-    follow-users self one-of other users
+  ask turtles [
+    follow-account self
+    unfollow-account self
 
-    ;; TO-DO: Create a way for users to determine how they're unfollowing.
-    ;; As is, this merely destroys some link to another random user.
-    unfollow-users self one-of other users
-
-
-    update-color self
+    update-account-color self
     ]
 
   ;; Link behaviour
   ask subs [ ;; Increment the age of all links.
     if boredom? [
-      if age > engagement [
+      if age > boredom-time [
         die
       ]
-
       set age (age + 1)
-      ;; set color
-
     ]
 
-    layout-circle sort users (world-width / 2 - 2)
+    layout-circle sort turtles (world-width / 2 - 2)
 
   ]
 
@@ -108,29 +114,53 @@ end
 ;; Helper Methods
 ;; -----------------------------------------------------
 
-to add-new-user
-  create-users 1 [
-    set interests n-values num-of-interests [0]
+to add-new-account
+  create-turtles 1 [
+    let generate random-float 1
+    if generate < 1 / 3 [
+      set breed consumers
+    ]
+    if (generate >= 1 / 3 and generate < 2 / 3) [
+      set breed creators
+    ]
+    if (generate >= 2 / 3) [
+      set breed bots
+    ]
+    set size 2
+    set interests n-values num-of-interests [random-float 1]
 
+    ;; New user has one very strong interest.
     set interests replace-item (random num-of-interests) interests 1
-    update-color self
+
+    update-account-color self
+    layout-circle n-of (count turtles) turtles (world-width / 2 - 2)
   ]
 end
 
-to follow-users [viewer creator]
-  ask viewer [
-    create-sub-to creator [
-      set color ([color] of creator)
-     set thickness 0.1
+to follow-account [account]
+  let index random num-of-interests ;; Choose random interest index.
+
+  ask account [
+    let follow-candidates turtles with [(item index [interests] of self) > (item index [interests] of myself) + 0.1]
+
+    if (any? follow-candidates) [
+      create-sub-to one-of follow-candidates [
+        set color ([color] of self)
+        set thickness 0.1
+      ]
     ]
   ]
+
 end
 
-to unfollow-users [viewer creator]
-  ;; TO-DO: Unfollow user.
-  ask viewer [
-    if (sub-with creator != nobody) [
-      ask sub-with creator [
+to unfollow-account [account]
+  let index random num-of-interests ;; Choose random interest index.
+
+  ask account [
+    let unfollow-candidates out-sub-neighbors with [(item index [interests] of self) <= (item index [interests] of myself) - 0.1]
+
+    if (any? unfollow-candidates) [
+      ask sub-with one-of unfollow-candidates [
         die
       ]
     ]
@@ -138,30 +168,48 @@ to unfollow-users [viewer creator]
 end
 
 to update-interest
-  ;; Takes the entry-wise average of the interests of users with the people they're following.
-  ask users [
-    let average-interests n-values num-of-interests [0]
+  ;; Purpose: Updates the interests of all accounts according to their type.
 
-    ask out-sub-neighbors [
-      set average-interests (map + [interests] of self average-interests)
+  ask turtles [
+
+    ;; Averaging of followed accounts.
+    if (breed = consumers) [
+      if any? out-sub-neighbors [
+        let average-interests n-values num-of-interests [0]
+        ask out-sub-neighbors [
+          set average-interests (map + ([interests] of self) average-interests)
+        ]
+        set interests map [total -> total / (count out-sub-neighbors)] average-interests
+      ]
     ]
 
-    set interests map [i -> i / (count out-sub-neighbors + 1)] (map + interests average-interests)
+    ;; Averaging of audience accounts.
+    if breed = creators [
+      if any? in-sub-neighbors [
+        let average-interests n-values num-of-interests [0]
+        ask in-sub-neighbors [
+          set average-interests (map + ([interests] of self) average-interests)
+        ]
+        set interests map [total -> total / (count in-sub-neighbors)] average-interests
+      ]
+    ]
 
-    ;; Updates color after changing interests.
-    update-color self
+    ;; Bots don't update their interests.
+
+    ;; Update color to reflect new
+    update-account-color self
   ]
 end
 
-to update-color [current-user]
-  ;; Updates the color of current-user according to their interests.
+to update-account-color [current-user]
+  ;; Purpose: Updates the color of current-user according to their interests.
 
   ;; Creates polar vectors equally separated radially in the hue color space.
-  let color-angle map [i -> i * 360.0 / num-of-interests] (range num-of-interests)
+  let color-angle map [scalar -> scalar * 360.0 / num-of-interests] (range num-of-interests)
 
   ;; Converts from polar to cartesian.
-  let x-projection map [i -> cos i] color-angle
-  let y-projection map [i -> sin i] color-angle
+  let x-projection map [angle -> cos angle] color-angle
+  let y-projection map [angle -> sin angle] color-angle
 
   ask current-user [
     ;; Scales cartesian vectors according to interests.
@@ -180,7 +228,7 @@ to update-color [current-user]
 
     let radius sqrt(mean-x ^ 2 + mean-y ^ 2)
 
-    set color hsb mean-angle (300 * radius) 100
+    set color hsb mean-angle (100 * radius) 100
 
     ask my-in-subs [
       ;; Updates colors of links leading to user.
@@ -190,9 +238,9 @@ to update-color [current-user]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-379
+375
 10
-816
+812
 448
 -1
 -1
@@ -217,10 +265,10 @@ ticks
 30.0
 
 BUTTON
-6
-10
-69
-43
+5
+201
+80
+234
 NIL
 setup
 NIL
@@ -235,39 +283,39 @@ NIL
 
 SLIDER
 6
-49
-184
-82
-initial-users
-initial-users
 10
-50
-10.0
+179
+43
+initial-num
+initial-num
+10
+100
+40.0
 1
 1
-users
+accounts
 HORIZONTAL
 
 SLIDER
-6
-87
-185
-120
+5
+162
+177
+195
 num-of-interests
 num-of-interests
 1
 24
-1.0
+5.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-76
-10
-139
-43
+102
+201
+177
+234
 NIL
 go
 T
@@ -281,10 +329,10 @@ NIL
 1
 
 SWITCH
-8
-198
-118
-231
+5
+277
+115
+310
 boredom?
 boredom?
 0
@@ -292,19 +340,85 @@ boredom?
 -1000
 
 SLIDER
-8
-235
-180
-268
-engagement
-engagement
+5
+314
+177
+347
+boredom-time
+boredom-time
 0
-100
-6.0
+10
+5.0
 1
 1
 turns
 HORIZONTAL
+
+SLIDER
+5
+123
+177
+156
+bot-proportion
+bot-proportion
+0
+1
+0.15
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+7
+48
+179
+81
+consumer-proportion
+consumer-proportion
+0
+1
+0.29
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+6
+85
+178
+118
+creator-proportion
+creator-proportion
+0
+1
+0.25
+0.01
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+190
+11
+370
+191
+- Consumers (🔴) update their interests based on who they're following.\n- Creators (⬛) update their interests based on who's following them.\n- Bots (⚡) have fixed interests.
+16
+0.0
+1
+
+SWITCH
+5
+239
+118
+272
+new-users
+new-users
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -398,6 +512,35 @@ Circle -16777216 true false 30 180 90
 Polygon -16777216 true false 162 80 132 78 134 135 209 135 194 105 189 96 180 89
 Circle -7500403 true true 47 195 58
 Circle -7500403 true true 195 195 58
+
+cat
+false
+0
+Line -7500403 true 285 240 210 240
+Line -7500403 true 195 300 165 255
+Line -7500403 true 15 240 90 240
+Line -7500403 true 285 285 195 240
+Line -7500403 true 105 300 135 255
+Line -16777216 false 150 270 150 285
+Line -16777216 false 15 75 15 120
+Polygon -7500403 true true 300 15 285 30 255 30 225 75 195 60 255 15
+Polygon -7500403 true true 285 135 210 135 180 150 180 45 285 90
+Polygon -7500403 true true 120 45 120 210 180 210 180 45
+Polygon -7500403 true true 180 195 165 300 240 285 255 225 285 195
+Polygon -7500403 true true 180 225 195 285 165 300 150 300 150 255 165 225
+Polygon -7500403 true true 195 195 195 165 225 150 255 135 285 135 285 195
+Polygon -7500403 true true 15 135 90 135 120 150 120 45 15 90
+Polygon -7500403 true true 120 195 135 300 60 285 45 225 15 195
+Polygon -7500403 true true 120 225 105 285 135 300 150 300 150 255 135 225
+Polygon -7500403 true true 105 195 105 165 75 150 45 135 15 135 15 195
+Polygon -7500403 true true 285 120 270 90 285 15 300 15
+Line -7500403 true 15 285 105 240
+Polygon -7500403 true true 15 120 30 90 15 15 0 15
+Polygon -7500403 true true 0 15 15 30 45 30 75 75 105 60 45 15
+Line -16777216 false 164 262 209 262
+Line -16777216 false 223 231 208 261
+Line -16777216 false 136 262 91 262
+Line -16777216 false 77 231 92 261
 
 circle
 false
@@ -498,6 +641,11 @@ false
 0
 Polygon -7500403 true true 150 210 135 195 120 210 60 210 30 195 60 180 60 165 15 135 30 120 15 105 40 104 45 90 60 90 90 105 105 120 120 120 105 60 120 60 135 30 150 15 165 30 180 60 195 60 180 120 195 120 210 105 240 90 255 90 263 104 285 105 270 120 285 135 240 165 240 180 270 195 240 210 180 210 165 195
 Polygon -7500403 true true 135 195 135 240 120 255 105 255 105 285 135 285 165 240 165 195
+
+lightning
+false
+0
+Polygon -7500403 true true 120 135 90 195 135 195 105 300 225 165 180 165 210 105 165 105 195 0 75 135
 
 line
 true
