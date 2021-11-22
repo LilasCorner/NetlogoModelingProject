@@ -8,6 +8,7 @@ directed-link-breed [ subs sub ]
 
 turtles-own [ ;; Internal variables of all accounts.
   interests
+  tired
   ;; List of floats representing strength of interests,
   ;; with interest 'i' in the i-th index.
 ]
@@ -17,8 +18,13 @@ subs-own [ ;; Internal variables of links.
   ;; Integer representing the number of ticks the link has existed.
 ]
 
+
+globals[ smallestSub ]
+
 ;; Setup Procedures
 ;; -----------------------------------------------------
+
+
 
 to setup
   clear-all
@@ -35,11 +41,13 @@ to setup
     create-consumers (initial-num * consumer-proportion) [
       set interests n-values num-of-interests [random-float 1]
       update-account-color self
+      set tired 0
       set size 2
     ]
     create-creators (initial-num * creator-proportion) [
       set interests n-values num-of-interests [random-float 1]
       update-account-color self
+      set tired 0
       set size 2
     ]
     create-bots (initial-num * bot-proportion) [
@@ -73,21 +81,41 @@ end
 ;; Maybe if turtle has no followers after certain number of ticks, they "die" (leave the social media service)?
 
 to go
+
   if not any? turtles [
     stop
   ]
 
-  ;; Buffer to add users every X number of ticks.
+
+  ;; Buffer to add/remove users every X number of ticks.
   if new-users [
-    if (ticks mod 10 = 0) [
+    if (ticks mod new-user-creation-time = 0) [
       add-new-account
     ]
-  ]
+   ]
+
+  if (ticks mod boredom-time = 0)[
+
+      ;;find the smallest sub count in the network
+      ask turtles[
+        if count my-in-subs < smallestSub
+          [set smallestSub count my-in-subs]
+      ]
+
+      ;; see if anyone wants to leave the platform
+      ask turtles [
+          if (count my-in-subs = smallestSub)
+          [remove-user self]
+      ]
+     ]
+
+
+
   ;; User behaviour
   ask turtles [
     follow-account self
     unfollow-account self
-
+    check-tiredness self
     update-account-color self
     ]
 
@@ -184,7 +212,7 @@ to update-interest
     ]
 
     ;; Averaging of audience accounts.
-    if breed = creators [
+    if (breed = creators) [
       if any? in-sub-neighbors [
         let average-interests n-values num-of-interests [0]
         ask in-sub-neighbors [
@@ -236,11 +264,30 @@ to update-account-color [current-user]
     ]
   ]
 end
+
+;; If user has the smallest follower count on the platform and theyre bored, they die/leave platform
+;; Only to be enabled if add new-users is on
+to remove-user[current-user]
+
+  if(tired = 1)[
+    die
+  ]
+
+end
+
+to check-tiredness[current-user]
+
+  ifelse(random boredom-time = boredom-time)
+  [set tired 1]
+  [set tired 0]
+
+
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-375
+553
 10
-812
+990
 448
 -1
 -1
@@ -265,10 +312,10 @@ ticks
 30.0
 
 BUTTON
-5
-201
-80
-234
+11
+10
+86
+43
 NIL
 setup
 NIL
@@ -282,10 +329,10 @@ NIL
 1
 
 SLIDER
-6
-10
-179
-43
+11
+50
+184
+83
 initial-num
 initial-num
 10
@@ -297,10 +344,10 @@ accounts
 HORIZONTAL
 
 SLIDER
-5
-162
-177
-195
+10
+202
+182
+235
 num-of-interests
 num-of-interests
 1
@@ -312,10 +359,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-102
-201
-177
-234
+108
+10
+183
+43
 NIL
 go
 T
@@ -329,10 +376,10 @@ NIL
 1
 
 SWITCH
-5
-277
-115
-310
+110
+239
+208
+272
 boredom?
 boredom?
 0
@@ -340,10 +387,10 @@ boredom?
 -1000
 
 SLIDER
-5
-314
-177
-347
+10
+279
+182
+312
 boredom-time
 boredom-time
 0
@@ -355,10 +402,10 @@ turns
 HORIZONTAL
 
 SLIDER
-5
-123
-177
-156
+10
+163
+182
+196
 bot-proportion
 bot-proportion
 0
@@ -370,10 +417,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-7
-48
-179
-81
+12
+88
+184
+121
 consumer-proportion
 consumer-proportion
 0
@@ -385,10 +432,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-6
-85
-178
-118
+11
+125
+183
+158
 creator-proportion
 creator-proportion
 0
@@ -399,26 +446,69 @@ creator-proportion
 NIL
 HORIZONTAL
 
-TEXTBOX
-190
-11
-370
-191
-- Consumers (🔴) update their interests based on who they're following.\n- Creators (⬛) update their interests based on who's following them.\n- Bots (⚡) have fixed interests.
-16
-0.0
-1
-
 SWITCH
-5
+9
 239
-118
+107
 272
 new-users
 new-users
-1
+0
 1
 -1000
+
+SLIDER
+10
+320
+182
+353
+new-user-creation-time
+new-user-creation-time
+0
+10
+5.0
+1
+1
+turns
+HORIZONTAL
+
+PLOT
+221
+12
+527
+162
+User Population
+Ticks
+# Users
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Consumers" 1.0 0 -4079321 true "" "plot count consumers"
+"Creators" 1.0 0 -13345367 true "" "plot count creators"
+"Bots" 1.0 0 -2674135 true "" "plot count bots"
+
+PLOT
+221
+167
+527
+317
+Population Interests
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -428,6 +518,12 @@ new-users
 ## HOW IT WORKS
 
 (what rules the agents use to create the overall behavior of the model)
+
+- Consumers (🔴) update their interests based on who they're following.
+- Creators (⬛) update their interests based on who's following them.
+- Bots (⚡) have fixed interests.
+
+
 
 ## HOW TO USE IT
 
@@ -796,7 +892,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.1
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
