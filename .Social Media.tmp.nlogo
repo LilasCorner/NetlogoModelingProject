@@ -226,7 +226,14 @@ to update-interest
 
     ;; Update color to reflect new
     update-account-color self
+
+    ;; Update size to reflect follower count
+    update-size self
   ]
+end
+
+to update-size[current-user]
+
 end
 
 to update-account-color [current-user]
@@ -285,9 +292,9 @@ to check-tiredness[current-user]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-375
+553
 10
-812
+990
 448
 -1
 -1
@@ -312,10 +319,10 @@ ticks
 30.0
 
 BUTTON
-194
-14
-269
-47
+11
+10
+86
+43
 NIL
 setup
 NIL
@@ -329,10 +336,10 @@ NIL
 1
 
 SLIDER
-6
-10
-179
-43
+11
+50
+184
+83
 initial-num
 initial-num
 10
@@ -344,10 +351,10 @@ accounts
 HORIZONTAL
 
 SLIDER
-5
-162
-177
-195
+10
+202
+182
+235
 num-of-interests
 num-of-interests
 1
@@ -359,10 +366,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-291
-14
-366
-47
+108
+10
+183
+43
 NIL
 go
 T
@@ -376,10 +383,10 @@ NIL
 1
 
 SWITCH
-105
-199
-203
-232
+110
+239
+208
+272
 boredom?
 boredom?
 0
@@ -387,10 +394,10 @@ boredom?
 -1000
 
 SLIDER
-5
-239
-177
-272
+10
+279
+182
+312
 boredom-time
 boredom-time
 0
@@ -402,10 +409,10 @@ turns
 HORIZONTAL
 
 SLIDER
-5
-123
-177
-156
+10
+163
+182
+196
 bot-proportion
 bot-proportion
 0
@@ -417,10 +424,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-7
-48
-179
-81
+12
+88
+184
+121
 consumer-proportion
 consumer-proportion
 0
@@ -432,10 +439,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-6
-85
-178
-118
+11
+125
+183
+158
 creator-proportion
 creator-proportion
 0
@@ -447,10 +454,10 @@ NIL
 HORIZONTAL
 
 SWITCH
-4
-199
-102
-232
+9
+239
+107
+272
 new-users
 new-users
 0
@@ -458,10 +465,10 @@ new-users
 -1000
 
 SLIDER
-5
-280
-177
-313
+10
+320
+182
+353
 new-user-creation-time
 new-user-creation-time
 0
@@ -473,10 +480,10 @@ turns
 HORIZONTAL
 
 PLOT
-5
-324
-311
-474
+221
+12
+527
+162
 User Population
 Ticks
 # Users
@@ -488,18 +495,18 @@ true
 true
 "" ""
 PENS
-"Consumers" 1.0 0 -4079321 true "" "plot count consumers"
+"Consumers" 1.0 0 -1184463 true "" "plot count consumers"
 "Creators" 1.0 0 -13345367 true "" "plot count creators"
 "Bots" 1.0 0 -2674135 true "" "plot count bots"
 
 PLOT
-7
-479
-311
-629
-Population Interests
-NIL
-NIL
+221
+167
+527
+317
+Population Avgerage Interests
+Ticks (not accurate yet)
+Interest Value
 0.0
 10.0
 0.0
@@ -508,7 +515,9 @@ true
 true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot count turtles"
+"Consumers" 1.0 0 -1184463 true "" "    let average-interests 0 \n    \n    ask consumers [\n      if any? out-sub-neighbors [\n        set average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n\n        ]\n       ]\n     ]  \n     \n               plot sum average-interests"
+"Creators" 1.0 0 -14070903 true "" "    let average-interests 0\n    \n    ask creators [\n      if any? out-sub-neighbors [\n        set average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n\n        ]\n       ]\n     ]  \n     \n               plot sum average-interests"
+"Bots" 1.0 0 -2674135 true "" "    let average-interests 0\n    \n    ask bots [\n      if any? out-sub-neighbors [\n        set average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n\n        ]\n       ]\n     ]  \n               plot sum average-interests"
 
 @#$#@#$#@
 ## WHAT IS IT?

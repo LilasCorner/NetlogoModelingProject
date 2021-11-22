@@ -226,7 +226,14 @@ to update-interest
 
     ;; Update color to reflect new
     update-account-color self
+
+    ;; Update size to reflect follower count
+    update-size self
   ]
+end
+
+to update-size[current-user]
+
 end
 
 to update-account-color [current-user]
@@ -488,7 +495,7 @@ true
 true
 "" ""
 PENS
-"Consumers" 1.0 0 -4079321 true "" "plot count consumers"
+"Consumers" 1.0 0 -1184463 true "" "plot count consumers"
 "Creators" 1.0 0 -13345367 true "" "plot count creators"
 "Bots" 1.0 0 -2674135 true "" "plot count bots"
 
@@ -497,9 +504,9 @@ PLOT
 167
 527
 317
-Population Interests
-NIL
-NIL
+Population Avgerage Interests
+Ticks (not accurate yet)
+Interest Value
 0.0
 10.0
 0.0
@@ -508,7 +515,10 @@ true
 true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot count turtles"
+"Consumers" 1.0 0 -1184463 true "" "    ask consumers [\n      if any? out-sub-neighbors [\n        let average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n          plot sum average-interests\n        ]\n       ]\n     ]  "
+"Creators" 1.0 0 -14070903 true "" "    ask creators [\n      if any? out-sub-neighbors [\n        let average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n          plot sum average-interests\n        ]\n       ]\n     ]  "
+"Bots" 1.0 0 -2674135 true "" "    ask bots [\n      if any? out-sub-neighbors [\n        let average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n          plot sum average-interests\n        ]\n       ]\n     ]  "
+"All Users" 1.0 0 -15637942 true "    ask turtles [\n      if any? out-sub-neighbors [\n        let average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n          plot sum average-interests\n        ]\n       ]\n     ]  " ""
 
 @#$#@#$#@
 ## WHAT IS IT?
