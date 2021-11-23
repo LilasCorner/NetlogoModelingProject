@@ -185,6 +185,7 @@ to unfollow-account [account]
   let index random num-of-interests ;; Choose random interest index.
 
   ask account [
+    ;; choose
     let unfollow-candidates out-sub-neighbors with [(item index [interests] of self) <= (item index [interests] of myself) - 0.1]
 
     if (any? unfollow-candidates) [
@@ -230,10 +231,6 @@ to update-interest
     ;; Update size to reflect follower count
     update-size self
   ]
-end
-
-to update-size[current-user]
-
 end
 
 to update-account-color [current-user]
@@ -283,12 +280,9 @@ to remove-user[current-user]
 end
 
 to check-tiredness[current-user]
-
   ifelse(random boredom-time = boredom-time)
   [set tired 1]
   [set tired 0]
-
-
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -359,7 +353,7 @@ num-of-interests
 num-of-interests
 1
 24
-5.0
+15.0
 1
 1
 NIL
@@ -495,7 +489,7 @@ true
 true
 "" ""
 PENS
-"Consumers" 1.0 0 -1184463 true "" "plot count consumers"
+"Consumers" 1.0 0 -14439633 true "" "plot count consumers"
 "Creators" 1.0 0 -13345367 true "" "plot count creators"
 "Bots" 1.0 0 -2674135 true "" "plot count bots"
 
@@ -510,14 +504,32 @@ Interest Value
 0.0
 10.0
 0.0
-10.0
+1.0
 true
 true
 "" ""
 PENS
-"Consumers" 1.0 0 -1184463 true "" "    let average-interests 0 \n    \n    ask consumers [\n      if any? out-sub-neighbors [\n        set average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n\n        ]\n       ]\n     ]  \n     \n               plot sum average-interests"
-"Creators" 1.0 0 -14070903 true "" "    let average-interests 0\n    \n    ask creators [\n      if any? out-sub-neighbors [\n        set average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n\n        ]\n       ]\n     ]  \n     \n               plot sum average-interests"
-"Bots" 1.0 0 -2674135 true "" "    let average-interests 0\n    \n    ask bots [\n      if any? out-sub-neighbors [\n        set average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n\n        ]\n       ]\n     ]  \n               plot sum average-interests"
+"Consumers" 1.0 0 -15040220 true "" "    let population-interests 0 \n    let individual-interests 0\n    let calc 0\n    \n    ask consumers [\n       ;;first avg each individual's interests\n       set calc (sum interests / num-of-interests)\n       \n       \n       ;;add that to the consumer's overall interest\n       set individual-interests individual-interests + calc\n\n    ]  \n    \n    set population-interests (individual-interests / count consumers)\n     \n    plot population-interests"
+"Creators" 1.0 0 -14070903 true "" "    let population-interests 0 \n    let individual-interests 0\n    let calc 0\n    \n    ask creators [\n       ;;first avg each individual's interests\n       set calc (sum interests / num-of-interests)\n       \n       \n       ;;add that to the consumer's overall interest\n       set individual-interests individual-interests + calc\n\n    ]  \n    \n    set population-interests (individual-interests / count creators)\n     \n    plot population-interests"
+"Bots" 1.0 0 -2674135 true "" "    let population-interests 0 \n    let individual-interests 0\n    let calc 0\n    \n    ask bots [\n       ;;first avg each individual's interests\n       set calc (sum interests / num-of-interests)\n       \n       \n       ;;add that to the consumer's overall interest\n       set individual-interests individual-interests + calc\n\n    ]  \n    \n    set population-interests (individual-interests / count bots)\n     \n    plot population-interests"
+
+PLOT
+221
+330
+525
+498
+Most Popular Interest
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -2674135 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?

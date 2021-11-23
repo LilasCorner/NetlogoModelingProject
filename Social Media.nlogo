@@ -185,6 +185,7 @@ to unfollow-account [account]
   let index random num-of-interests ;; Choose random interest index.
 
   ask account [
+    ;; choose
     let unfollow-candidates out-sub-neighbors with [(item index [interests] of self) <= (item index [interests] of myself) - 0.1]
 
     if (any? unfollow-candidates) [
@@ -232,10 +233,6 @@ to update-interest
   ]
 end
 
-to update-size[current-user]
-
-end
-
 to update-account-color [current-user]
   ;; Purpose: Updates the color of current-user according to their interests.
 
@@ -272,6 +269,10 @@ to update-account-color [current-user]
   ]
 end
 
+;;NEW STUFF BELOW :)
+
+
+
 ;; If user has the smallest follower count on the platform and theyre bored, they die/leave platform
 ;; Only to be enabled if add new-users is on
 to remove-user[current-user]
@@ -283,11 +284,13 @@ to remove-user[current-user]
 end
 
 to check-tiredness[current-user]
-
   ifelse(random boredom-time = boredom-time)
   [set tired 1]
   [set tired 0]
+end
 
+
+to update-size[current-user]
 
 end
 @#$#@#$#@
@@ -359,7 +362,7 @@ num-of-interests
 num-of-interests
 1
 24
-5.0
+15.0
 1
 1
 NIL
@@ -495,7 +498,7 @@ true
 true
 "" ""
 PENS
-"Consumers" 1.0 0 -1184463 true "" "plot count consumers"
+"Consumers" 1.0 0 -14439633 true "" "plot count consumers"
 "Creators" 1.0 0 -13345367 true "" "plot count creators"
 "Bots" 1.0 0 -2674135 true "" "plot count bots"
 
@@ -510,14 +513,32 @@ Interest Value
 0.0
 10.0
 0.0
-10.0
+1.0
 true
 true
 "" ""
 PENS
-"Consumers" 1.0 0 -1184463 true "" "    let population-interests 0 \n    let individual-interests 0\n    \n    ask consumers [\n       ;;first avg each individual's interests\n       set individual-interests individual-interests + (sum [interests] of self / count interests of self)\n    ]  \n    \n    set population-interests (individual-interests / count consumers)\n     \n    plot population-interests"
-"Creators" 1.0 0 -14070903 true "" "    let population-interests 0 \n    let individual-interests 0\n    \n    ask creators [\n       ;;first avg each individual's interests\n       set individual-interests individual-interests + (sum [interests] of self / count [interests] of self)\n    ]  \n    \n    set population-interests (individual-interests / count consumers)\n     \n    plot sum population-interests"
-"Bots" 1.0 0 -2674135 true "" "    let population-interests 0 \n    let individual-interests 0\n    \n    ask bots [\n       ;;first avg each individual's interests\n       set individual-interests individual-interests + (sum [interests] of self / count [interests] of self)\n    ]  \n    \n    set population-interests (individual-interests / count consumers)\n     \n    plot sum population-interests"
+"Consumers" 1.0 0 -15040220 true "" "    let population-interests 0 \n    let individual-interests 0\n    let calc 0\n    \n    ask consumers [\n       ;;first avg each individual's interests\n       set calc (sum interests / num-of-interests)\n       \n       \n       ;;add that to the consumer's overall interest\n       set individual-interests individual-interests + calc\n\n    ]  \n    \n    set population-interests (individual-interests / count consumers)\n     \n    plot population-interests"
+"Creators" 1.0 0 -14070903 true "" "    let population-interests 0 \n    let individual-interests 0\n    let calc 0\n    \n    ask creators [\n       ;;first avg each individual's interests\n       set calc (sum interests / num-of-interests)\n       \n       \n       ;;add that to the consumer's overall interest\n       set individual-interests individual-interests + calc\n\n    ]  \n    \n    set population-interests (individual-interests / count creators)\n     \n    plot population-interests"
+"Bots" 1.0 0 -2674135 true "" "    let population-interests 0 \n    let individual-interests 0\n    let calc 0\n    \n    ask bots [\n       ;;first avg each individual's interests\n       set calc (sum interests / num-of-interests)\n       \n       \n       ;;add that to the consumer's overall interest\n       set individual-interests individual-interests + calc\n\n    ]  \n    \n    set population-interests (individual-interests / count bots)\n     \n    plot population-interests"
+
+PLOT
+221
+330
+525
+498
+Most Popular Interest
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -2674135 true "" ""
 
 @#$#@#$#@
 ## WHAT IS IT?
