@@ -286,8 +286,8 @@ end
 
 to check-tiredness[current-user]
   ask current-user[
-    ifelse(random (boredom-time + 1) = boredom-time) ;;creator: if followers
-    [set tired true]                                 ;;consumer: if interests
+    ifelse(random (boredom-time + 1) = boredom-time) ;;creator: if follow count low they leave
+    [set tired true]                                 ;;consumer: if interests not matched by people they're following
     [set tired false]
   ]
 
