@@ -115,9 +115,12 @@ to go
   ask turtles [
     follow-account self
     unfollow-account self
-    check-tiredness self
     update-account-color self
+
+    if(new-users = true)[ ;; only check tiredness if we're adding new users
+      check-tiredness self
     ]
+  ]
 
   ;; Link behaviour
   ask subs [ ;; Increment the age of all links.
@@ -228,8 +231,6 @@ to update-interest
     ;; Update color to reflect new
     update-account-color self
 
-    ;; Update size to reflect follower count
-    update-size self
   ]
 end
 
@@ -269,20 +270,27 @@ to update-account-color [current-user]
   ]
 end
 
+;;NEW STUFF BELOW :)
+
+
+
 ;; If user has the smallest follower count on the platform and theyre bored, they die/leave platform
 ;; Only to be enabled if add new-users is on
 to remove-user[current-user]
-
-  if(tired = 1)[
+  ask current-user[
+    if(tired = true)[
     die
+    ]
   ]
-
 end
 
 to check-tiredness[current-user]
-  ifelse(random boredom-time = boredom-time)
-  [set tired 1]
-  [set tired 0]
+  ask current-user[
+    ifelse(random (boredom-time + 1) = boredom-time) ;;creator: if `
+    [set tired true]                                 ;;consumer: if
+    [set tired false]
+  ]
+
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -396,7 +404,7 @@ boredom-time
 boredom-time
 0
 10
-5.0
+1.0
 1
 1
 turns
