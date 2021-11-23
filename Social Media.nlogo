@@ -515,10 +515,9 @@ true
 true
 "" ""
 PENS
-"Consumers" 1.0 0 -1184463 true "" "    ask consumers [\n      if any? out-sub-neighbors [\n        let average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n          plot sum average-interests\n        ]\n       ]\n     ]  "
-"Creators" 1.0 0 -14070903 true "" "    ask creators [\n      if any? out-sub-neighbors [\n        let average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n          plot sum average-interests\n        ]\n       ]\n     ]  "
-"Bots" 1.0 0 -2674135 true "" "    ask bots [\n      if any? out-sub-neighbors [\n        let average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n          plot sum average-interests\n        ]\n       ]\n     ]  "
-"All Users" 1.0 0 -15637942 true "    ask turtles [\n      if any? out-sub-neighbors [\n        let average-interests n-values num-of-interests [0]\n        ask out-sub-neighbors [\n          set average-interests (map + ([interests] of self) average-interests)\n          plot sum average-interests\n        ]\n       ]\n     ]  " ""
+"Consumers" 1.0 0 -1184463 true "" "    let population-interests 0 \n    let individual-interests 0\n    \n    ask consumers [\n       ;;first avg each individual's interests\n       set individual-interests individual-interests + (sum [interests] of self / count interests of self)\n    ]  \n    \n    set population-interests (individual-interests / count consumers)\n     \n    plot population-interests"
+"Creators" 1.0 0 -14070903 true "" "    let population-interests 0 \n    let individual-interests 0\n    \n    ask creators [\n       ;;first avg each individual's interests\n       set individual-interests individual-interests + (sum [interests] of self / count [interests] of self)\n    ]  \n    \n    set population-interests (individual-interests / count consumers)\n     \n    plot sum population-interests"
+"Bots" 1.0 0 -2674135 true "" "    let population-interests 0 \n    let individual-interests 0\n    \n    ask bots [\n       ;;first avg each individual's interests\n       set individual-interests individual-interests + (sum [interests] of self / count [interests] of self)\n    ]  \n    \n    set population-interests (individual-interests / count consumers)\n     \n    plot sum population-interests"
 
 @#$#@#$#@
 ## WHAT IS IT?
