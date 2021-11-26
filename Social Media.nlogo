@@ -240,7 +240,7 @@ to update-tired [current-account]
     ;; If I'm a consumer with no-one I'm following...
     ;; OR
     ;; If I'm a creator with no-one following me...
-    ifelse (breed = consumers and count my-out-subs > 3) or (breed = creators and count my-in-subs < 3)
+    ifelse (breed = consumers and count my-out-subs > min-subs) or (breed = creators and count my-in-subs < min-subs)
     ;; ...be tired.
     [set tired true] [
       if breed = consumers or breed = creators [set tired false] ;; Second if check necessary because bots will never be tired otherwise.
@@ -329,9 +329,9 @@ HORIZONTAL
 
 SLIDER
 11
-224
+237
 183
-257
+270
 num-of-interests
 num-of-interests
 1
@@ -383,7 +383,7 @@ bot-proportion
 bot-proportion
 0
 1
-0.0
+0.24
 0.01
 1
 NIL
@@ -398,7 +398,7 @@ consumer-proportion
 consumer-proportion
 0
 1
-0.09
+0.25
 0.01
 1
 NIL
@@ -413,7 +413,7 @@ creator-proportion
 creator-proportion
 0
 1
-0.56
+0.22
 0.01
 1
 NIL
@@ -421,9 +421,9 @@ HORIZONTAL
 
 SWITCH
 10
-261
+274
 182
-294
+307
 sign-up-and-exit
 sign-up-and-exit
 1
@@ -500,48 +500,108 @@ unfollow-rate
 turns
 HORIZONTAL
 
+SLIDER
+11
+200
+183
+233
+min-subs
+min-subs
+0
+10
+6.0
+1
+1
+NIL
+HORIZONTAL
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+This project attempts to model how social media platforms reccomend a user followers based on their interests, and how those individual interests change as a result of the influences from those they follow/are followed by. 
+
+We have three types of users on the platform:
+
+- Consumers (🔴), who update their interests based on who they're following.
+- Creators (⬛), who update their interests based on who's following them.
+- Bots (⚡), who have fixed interests.
+
+All users follow and unfollow another user on the platform every tick. To visually represent each users interests, they are assigned a color representing the strongest interest they hold. 
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+Each user has a set of interests, which is a randomly generated list of floats from 0.0 to 1.0 representing the strength of that particular interest. Users also have an internal TIRED boolean, which indicates whether an account would like to leave the platform or not. This is only used if SIGN-UP-AND-EXIT is enabled.
 
-- Consumers (🔴) update their interests based on who they're following.
-- Creators (⬛) update their interests based on who's following them.
-- Bots (⚡) have fixed interests.
+Every tick, users follow/unfollow other users on the platform, then update their interests depending on their ruleset. Creators update their interests based on who's following them, consumer's update their interests based on who they're following, and bots do not change their interests at all.
+
+To follow another user, a user selects one of the interests from their list randomly, then searches for other users on the platform who have a greater intensity in that interest. The user then follows one of the people who they've found who have a greater intensity in that interest.
+
+To unfollow another user, similar logic applies: a user selects one of their interests at random, and investigates the accounts they're currently following. If the interest of one of those accounts is <= the user's interest intensity, the user unfollows that account. 
+
+To update the user's interests based on who they're followed by (Creators) or are following (Consumers), we average out the collective interests of the accounts a user is influenced by. The user's interests are then increased/decreased by this average intensity. AAAAAAAAAAAAAAA - needs clearer language/more accurate detailing
+
+To update the user's color based on their interests, we utilize the color wheel present in many HSB models of color, and divide up the wheel into sections depending on how many interests we need to represent. Each interest is mapped to a section of the wheel, and each user is given a color according to the weighted average of their interests as mapped on the wheel. AAAAAAAAA - think I worded this correctly? Needs proof-reading
+
+If SIGN-UP-AND-EXIT is enabled, a few more factors are at play. Every tick, we also ask the user if they're tired, and update their size based on if they're tired to visually represent that a particular user is likely to leave the platform. Every SIGN-UP-RATE amount of ticks, we add a user to the platform, and every EXIT-RATE amount of ticks, users who are tired of the platform leave. 
 
 
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+
+The sliders on the interface select the initial settings for the model, as well as provide a graphical overview of what interests have taken over the platform. Click SETUP to initialize the users, and GO to begin the simulation. The colors of each user show what interest they believe in most strongly. If a user follows/is followed by another user, it is represented by a directed link to the person being followed.
+
+INITIAL-NUM specifies the number of the users on the platform, while CONSUMER-PROPORTION/CREATOR-PROPORTION/BOT-PROPORTION control the proportions of each type of user. 
+
+MIN-SUBS is the minimum amount of links a user can have before they become tired of the platform, and potentially leave, given that SIGN-UP-AND-EXIT is on.
+
+SIGN-UP-AND-EXIT allows new users to sign up every SIGN-UP-RATE ticks, and exit the platform every EXIT-RATE ticks that pass.
+
+UNFOLLOW-RATE AAAAAAAAAAAAA -- is this variable used? Can't find it
+
 
 ## THINGS TO NOTICE
 
-(suggested things for the user to notice while running the model)
+- What factors lead to the interests of the group becoming fully homogenized (one color)? 
+
+- Bots usually do not have as much staying power on the platform as Consumers and Creators. Why do you think this may be? 
+
+- Some users may grow tired of the platform, then decide against it later. Do these users usually last in comparison to their peers?
+
+- The Average Interests graph plots out the intensity of each interest among users, but the one user type who's interests never vary are the bots. The graph shows fluctuations in bot interest when SIGN-UP-AND-EXIT is enabled -- why does this occur?
 
 ## THINGS TO TRY
 
 (suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+- Try changing the MIN-SUBS slider in the middle of the experiment. How does this affect the staying power of each type of user?
+
+- Try changing the inital proportion of users the model starts with. Do the same trends emerge, or do certain users dominate the platform?
+
 
 ## EXTENDING THE MODEL
 
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+- Make the Creators/Consumers more complex, not all users immediately take onto the opinions of those they follow. Perhaps you could make each user more/less susceptable to bot accounts, and more likely to stick to the interests of said bot account once they are encountered. 
+
+- Some users may follow others not because they have similar interests, but because they know eachother offline. 
+
+- Create another type of user (MODERATOR) who eliminates bots once their influence is high enough/they are followed by enough accounts. This could reduce their presence on the platform when SIGN-UP-AND-EXIT is not enabled. 
+
 
 ## NETLOGO FEATURES
 
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+Links are utilized to represent the followings between users on the network, and the "layout-circle" primitive is used to orient our users in a circle so the network is more visually clear. We also use "set-default-shape" to make our links curved, and to give each user their distinct shape.
 
 ## RELATED MODELS
 
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+Netlogo Model Library:
+- Preferential Attachment
+- Language Change
+- Diffusion on a Directed Network
+- Virus on a Network
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+N/A as of now AAAAAAAAAAA -- maybe we thank Dr. Murphy lol this was a good learning experience
 @#$#@#$#@
 default
 true
@@ -882,7 +942,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.1
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
