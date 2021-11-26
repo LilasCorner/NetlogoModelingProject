@@ -569,7 +569,7 @@ To unfollow another user, similar logic applies: a user selects one of their int
 
 To update the user's interests based on who they're followed by (Creators) or are following (Consumers), we average out the collective interests of the people a user is influenced by. 
 
-To update the user's color based on their interests,
+To update the user's color based on their interests, we utilize the color wheel present in many HSB models of color, and divide up the wheel into sections depending on how many interests we need to represent. Each interest is m
 
 
 
@@ -595,6 +595,10 @@ INITIAL-NUM specifies the number of the users on the platform, while CONSUMER-PR
 ## EXTENDING THE MODEL
 
 (suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+
+Create a method that changes the size of a user depending on how many followers they have.
+
+
 
 ## NETLOGO FEATURES
 
