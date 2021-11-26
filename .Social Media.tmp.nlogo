@@ -515,6 +515,16 @@ min-subs
 NIL
 HORIZONTAL
 
+TEXTBOX
+222
+326
+537
+496
+Consumers (🔴), who update their interests based on who they’re following.\nCreators (⬛), who update their interests based on who’s following them.\nBots (⚡), who have fixed interests.
+14
+0.0
+1
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -538,9 +548,9 @@ To follow another user, a user selects one of the interests from their list rand
 
 To unfollow another user, similar logic applies: a user selects one of their interests at random, and investigates the accounts they're currently following. If the interest of one of those accounts is <= the user's interest intensity, the user unfollows that account. 
 
-To update the user's interests based on who they're followed by (Creators) or are following (Consumers), we average out the collective interests of the accounts a user is influenced by. The user's interests are then increased/decreased by this average intensity. AAAAAAAAAAAAAAA - needs clearer language/more accurate detailing
+To update the user's interests based on who they're followed by (Creators) or are following (Consumers), we average out the collective interests of the accounts a user is influenced by. The user's interests are then increased/decreased by this average intensity. TODO - needs clearer language/more accurate detailing
 
-To update the user's color based on their interests, we utilize the color wheel present in many HSB models of color, and divide up the wheel into sections depending on how many interests we need to represent. Each interest is mapped to a section of the wheel, and each user is given a color according to the weighted average of their interests as mapped on the wheel. AAAAAAAAA - think I worded this correctly? Needs proof-reading
+To update the user's color based on their interests, we utilize the color wheel present in many HSB models of color, and divide up the wheel into sections depending on how many interests we need to represent. Each interest is mapped to a section of the wheel, and each user is given a color according to the weighted average of their interests as mapped on the wheel. TODO - think I worded this correctly? Needs proof-reading
 
 If SIGN-UP-AND-EXIT is enabled, a few more factors are at play. Every tick, we also ask the user if they're tired, and update their size based on if they're tired to visually represent that a particular user is likely to leave the platform. Every SIGN-UP-RATE amount of ticks, we add a user to the platform, and every EXIT-RATE amount of ticks, users who are tired of the platform leave. 
 
@@ -557,18 +567,19 @@ MIN-SUBS is the minimum amount of links a user can have before they become tired
 
 SIGN-UP-AND-EXIT allows new users to sign up every SIGN-UP-RATE ticks, and exit the platform every EXIT-RATE ticks that pass.
 
-UNFOLLOW-RATE AAAAAAAAAAAAA -- is this variable used? Can't find it
+UNFOLLOW-RATE TODO -- is this variable used? Can't find it
 
 
 ## THINGS TO NOTICE
 
 - What factors lead to the interests of the group becoming fully homogenized (one color)? 
 
-- Bots usually do not have as much staying pow
+- Bots usually do not have as much staying power on the platform as Consumers and Creators. Why do you think this may be? 
 
 - Some users may grow tired of the platform, then decide against it later. Do these users usually last in comparison to their peers?
 
 - The Average Interests graph plots out the intensity of each interest among users, but the one user type who's interests never vary are the bots. The graph shows fluctuations in bot interest when SIGN-UP-AND-EXIT is enabled -- why does this occur?
+TODO -- This graph is subject to c
 
 ## THINGS TO TRY
 
@@ -601,7 +612,7 @@ Netlogo Model Library:
 
 ## CREDITS AND REFERENCES
 
-N/A as of now AAAAAAAAAAA -- maybe we thank Dr. Murphy lol this was a good learning experience
+N/A as of now TODO -- maybe we thank Dr. Murphy lol this was a good learning experience
 @#$#@#$#@
 default
 true
