@@ -526,15 +526,13 @@ We have three types of users on the platform:
 - Creators (⬛), who update their interests based on who's following them.
 - Bots (⚡), who have fixed interests.
 
-All users follow and unfollow another user on the platform every tick.To visually represent each users interests, they are assigned a color representing the strongest interess they hold. 
+All users follow and unfollow another user on the platform every tick.To visually represent each users interests, they are assigned a color representing the strongest interest they hold. 
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+Each user has a set of influences, which is a randomly generated list of floats from 0.0 to 1.0 representing the strength of that particular interest. 
 
-Each user has a set of influences, which is a randomly generated list of floats from 0.0 to 1.0 representing the strength of that particular interest. The number of interests in the list is controlled by the NUM-OF-INTERESTS slider, and applies to all users. Each user also has an internal TIRED boolean, which indicates when a user is tired of the platform and is likely to leave. 
-
-
+Every tick, users follow/unfollow other users on the platform, then update their interests depending on their ruleset. Creators update their interests based on who's following them to keep their following, while consumer's
 
 To follow another user, a user selects one of the interests from their list randomly, then searches for other users on the platform who have a greater intensity in that interest. The user then follows one of the people who they've found who have a greater intensity in that interest.
 
@@ -542,7 +540,7 @@ To unfollow another user, similar logic applies: a user selects one of their int
 
 To update the user's interests based on who they're followed by (Creators) or are following (Consumers), we average out the collective interests of the people a user is influenced by. 
 
-To update the user's color based on their interests, we utilize the color wheel present in many HSB models of color, and divide up the wheel into sections depending on how many interests we need to represent. Each interest is m
+To update the user's color based on their interests, we utilize the color wheel present in many HSB models of color, and divide up the wheel into sections depending on how many interests we need to represent. Each interest is mapped to a section of the wheel, and each user is given a color according to the weighted average of their interests . 
 
 
 
@@ -550,7 +548,6 @@ To update the user's color based on their interests, we utilize the color wheel 
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
 
 The sliders on the interface select the initial settings for the model, as well as provide a graphical overview of what interests have taken over the platform. Click SETUP to initialize the users, and GO to begin the simulation. The colors of each user show what interest they believe in most strongly. If a user follows/is followed by another user, it is represented by a directed link to the person being followed.
 
@@ -567,7 +564,10 @@ UNFOLLOW-RATE AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ## THINGS TO NOTICE
 
-(suggested things for the user to notice while running the model)
+- In certain runs, users become white -- what do you believe this represents in terms of their interests? 
+
+- Are the interests of bots more swaying than that of other accounts?
+
 
 ## THINGS TO TRY
 
@@ -577,18 +577,19 @@ UNFOLLOW-RATE AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 (suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
 
-Make the Creators/Consumers more complex, not all users immediately take onto the opinions of those they follow. Perhaps you could make each user more/less susceptable to bot accounts, and more likely to stick to the interests of said bot account once they are encountered. 
+- Make the Creators/Consumers more complex, not all users immediately take onto the opinions of those they follow. Perhaps you could make each user more/less susceptable to bot accounts, and more likely to stick to the interests of said bot account once they are encountered. 
 
-Create another type of user [MODERATOR] who eliminates bots once their influence is high enough/they are followed by enough accounts.
+- Create another type of user (MODERATOR) who eliminates bots once their influence is high enough/they are followed by enough accounts.
 
 
 ## NETLOGO FEATURES
 
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+Links are utilized to represent the followings between users on the network, and the "layout-circle" primitive is used to orient our users in a circle so the network is more visually clear. We also use "set-default-shape" to make our links curved, and to give each user their distinct shape.
 
 ## RELATED MODELS
 
 Netlogo Model Library:
+- Preferential Attachment
 - Language Change
 - Diffusion on a Directed Network
 - Virus on a Network
