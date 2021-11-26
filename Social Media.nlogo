@@ -240,7 +240,7 @@ to update-tired [current-account]
     ;; If I'm a consumer with no-one I'm following...
     ;; OR
     ;; If I'm a creator with no-one following me...
-    ifelse (breed = consumers and count my-out-subs > 3) or (breed = creators and count my-in-subs < 3)
+    ifelse (breed = consumers and count my-out-subs > min-subs) or (breed = creators and count my-in-subs < min-subs)
     ;; ...be tired.
     [set tired true] [
       if breed = consumers or breed = creators [set tired false] ;; Second if check necessary because bots will never be tired otherwise.
@@ -329,9 +329,9 @@ HORIZONTAL
 
 SLIDER
 11
-224
+237
 183
-257
+270
 num-of-interests
 num-of-interests
 1
@@ -383,7 +383,7 @@ bot-proportion
 bot-proportion
 0
 1
-0.0
+0.24
 0.01
 1
 NIL
@@ -398,7 +398,7 @@ consumer-proportion
 consumer-proportion
 0
 1
-0.09
+0.25
 0.01
 1
 NIL
@@ -413,7 +413,7 @@ creator-proportion
 creator-proportion
 0
 1
-0.56
+0.22
 0.01
 1
 NIL
@@ -421,9 +421,9 @@ HORIZONTAL
 
 SWITCH
 10
-261
+274
 182
-294
+307
 sign-up-and-exit
 sign-up-and-exit
 1
@@ -500,6 +500,21 @@ unfollow-rate
 turns
 HORIZONTAL
 
+SLIDER
+11
+200
+183
+233
+min-subs
+min-subs
+0
+10
+6.0
+1
+1
+NIL
+HORIZONTAL
+
 @#$#@#$#@
 ## WHAT IS IT?
 
@@ -511,17 +526,14 @@ We have three types of users on the platform:
 - Creators (⬛), who update their interests based on who's following them.
 - Bots (⚡), who have fixed interests.
 
-All users seek to follow and unfollow another user on the platform.To visually represent each users interests, they are assigned a color representing the strongest interess they hold. If new-users is enabled, a randomly selected user type is added to the platform. This flag also allows creator/consumer to leave the platform if the number of people following them is low enough, and they are bored of the platform overall. The links between users are directed, and are referred to as "subs" within the model (short for subsriptions, )
+All users follow and unfollow another user on the platform every tick.To visually represent each users interests, they are assigned a color representing the strongest interest they hold. 
 
 ## HOW IT WORKS
 
 (what rules the agents use to create the overall behavior of the model)
 
-Each user has a set of influences, which is a randomly generated list of floats from 0.0 to 1.0 representing the strength of that particular interest. The number of interests in the list is controlled by the NUM-OF-INTERESTS slider, and applies to all users. Each user also has an internal TIRED boolean, which indicates when a user is tired of the platform and is likely to leave. 
+Each user has a set of influences, which is a randomly generated list of floats from 0.0 to 1.0 representing the strength of that particular interest. 
 
-The BOREDOM-TIME slider serves two purposes: to increment the AGE variable of the links/subs between users, and to determine when we check if a user wishes to leave the platform (if NEW-USERS is set to true). Every BOREDOM-TIME ticks that pass, we increment the age of all links/subs by 1. Once the age is equal to BOREDOM-TIME, the user unfollows the other account. In addition to aging the links, when BOREDOM-TIME ticks have passed, we check the user with the lowest number of followers on the platform, and check if their TIRED flag equals true. If so, they leave the platform. By turning off BOREDOM-TIME, users never unfollow eachother and they also never tire of the platform.
-
-The NEW-USERS switch allows the model to generate new users according to the amount of ticks specified by NEW-USER-CREATION-TIME. 
 
 
 To follow another user, a user selects one of the interests from their list randomly, then searches for other users on the platform who have a greater intensity in that interest. The user then follows one of the people who they've found who have a greater intensity in that interest.
@@ -540,9 +552,17 @@ To update the user's color based on their interests, we utilize the color wheel 
 
 (how to use the model, including a description of each of the items in the Interface tab)
 
-The sliders on the interface select the initial settings for the model, as well as provide a graphical overview of what interests have taken over the platform. 
+The sliders on the interface select the initial settings for the model, as well as provide a graphical overview of what interests have taken over the platform. Click SETUP to initialize the users, and GO to begin the simulation. The colors of each user show what interest they believe in most strongly. If a user follows/is followed by another user, it is represented by a directed link to the person being followed.
 
 INITIAL-NUM specifies the number of the users on the platform, while CONSUMER-PROPORTION/CREATOR-PROPORTION/BOT-PROPORTION control the proportions of each type of user. 
+
+MIN-SUBS is the minimum amount of links a user can have before they become tired of the platform, and leave, given that SIGN-UP-AND-EXIT is on.
+
+SIGN-UP-AND-EXIT allows new users to sign up every SIGN-UP-RATE ticks, and exit the platform every EXIT-RATE ticks that pass.
+
+UNFOLLOW-RATE AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+
 
 
 ## THINGS TO NOTICE
@@ -557,8 +577,9 @@ INITIAL-NUM specifies the number of the users on the platform, while CONSUMER-PR
 
 (suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
 
-Create a method that changes the size of a user depending on how many followers they have.
+Make the Creators/Consumers more complex, not all users immediately take onto the opinions of those they follow. Perhaps you could make each user more/less susceptable to bot accounts, and more likely to stick to the interests of said bot account once they are encountered. 
 
+Create another type of user [MODERATOR] who eliminates bots once their influence is high enough/they are followed by enough accounts.
 
 
 ## NETLOGO FEATURES
@@ -567,11 +588,14 @@ Create a method that changes the size of a user depending on how many followers 
 
 ## RELATED MODELS
 
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+Netlogo Model Library:
+- Language Change
+- Diffusion on a Directed Network
+- Virus on a Network
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+N/A as of now AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 @#$#@#$#@
 default
 true
