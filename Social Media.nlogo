@@ -503,21 +503,47 @@ HORIZONTAL
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+This project attempts to model how social media platforms reccomend a user followers based on their interests, and how those individual interests change as a result of the influences from those they follow/are followed by. 
+
+We have three types of users on the platform:
+
+- Consumers (🔴), who update their interests based on who they're following.
+- Creators (⬛), who update their interests based on who's following them.
+- Bots (⚡), who have fixed interests.
+
+All users seek to follow and unfollow another user on the platform.To visually represent each users interests, they are assigned a color representing the strongest interess they hold. If new-users is enabled, a randomly selected user type is added to the platform. This flag also allows creator/consumer to leave the platform if the number of people following them is low enough, and they are bored of the platform overall. The links between users are directed, and are referred to as "subs" within the model (short for subsriptions, )
 
 ## HOW IT WORKS
 
 (what rules the agents use to create the overall behavior of the model)
 
-- Consumers (🔴) update their interests based on who they're following.
-- Creators (⬛) update their interests based on who's following them.
-- Bots (⚡) have fixed interests.
+Each user has a set of influences, which is a randomly generated list of floats from 0.0 to 1.0 representing the strength of that particular interest. The number of interests in the list is controlled by the NUM-OF-INTERESTS slider, and applies to all users. Each user also has an internal TIRED boolean, which indicates when a user is tired of the platform and is likely to leave. 
+
+The BOREDOM-TIME slider serves two purposes: to increment the AGE variable of the links/subs between users, and to determine when we check if a user wishes to leave the platform (if NEW-USERS is set to true). Every BOREDOM-TIME ticks that pass, we increment the age of all links/subs by 1. Once the age is equal to BOREDOM-TIME, the user unfollows the other account. In addition to aging the links, when BOREDOM-TIME ticks have passed, we check the user with the lowest number of followers on the platform, and check if their TIRED flag equals true. If so, they leave the platform. By turning off BOREDOM-TIME, users never unfollow eachother and they also never tire of the platform.
+
+The NEW-USERS switch allows the model to generate new users according to the amount of ticks specified by NEW-USER-CREATION-TIME. 
+
+
+To follow another user, a user selects one of the interests from their list randomly, then searches for other users on the platform who have a greater intensity in that interest. The user then follows one of the people who they've found who have a greater intensity in that interest.
+
+To unfollow another user, similar logic applies: a user selects one of their interests at random, and investigates the accounts they're currently following. If the interest of one of those accounts is <= the user's interest intensity, the user unfollows that account. 
+
+To update the user's interests based on who they're followed by (Creators) or are following (Consumers), we average out the collective interests of the people a user is influenced by. 
+
+To update the user's color based on their interests, we utilize the color wheel present in many HSB models of color, and divide up the wheel into sections depending on how many interests we need to represent. Each interest is m
+
+
 
 
 
 ## HOW TO USE IT
 
 (how to use the model, including a description of each of the items in the Interface tab)
+
+The sliders on the interface select the initial settings for the model, as well as provide a graphical overview of what interests have taken over the platform. 
+
+INITIAL-NUM specifies the number of the users on the platform, while CONSUMER-PROPORTION/CREATOR-PROPORTION/BOT-PROPORTION control the proportions of each type of user. 
+
 
 ## THINGS TO NOTICE
 
@@ -530,6 +556,10 @@ HORIZONTAL
 ## EXTENDING THE MODEL
 
 (suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+
+Create a method that changes the size of a user depending on how many followers they have.
+
+
 
 ## NETLOGO FEATURES
 
@@ -882,7 +912,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.1
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
