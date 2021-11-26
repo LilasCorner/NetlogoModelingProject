@@ -1,56 +1,55 @@
 breed [ consumers consumer ] ;; Average interests of followed accounts.
 breed [ creators creator ] ;; Average interests of audience.
 breed [ bots bot ] ;; Fixed interests.
+
 directed-link-breed [ subs sub ]
 ;; (Shortening of "subscription")
 ;; Links representing a follow; direction is
 ;; from who is following to who is followed.
 
-turtles-own [ ;; Internal variables of all accounts.
-  interests
-  ;; List of floats representing strength of interests,
-  ;; with interest 'i' in the i-th index.
+turtles-own [
+  interests ;; List of floats representing strength of interests.
+  tired ;; Boolean representing whether the account wishes to leave.
 ]
 
-subs-own [ ;; Internal variables of links.
-  age
-  ;; Integer representing the number of ticks the link has existed.
-]
-
-;; Setup Procedures
+;; SETUP PROCEDURE
 ;; -----------------------------------------------------
-
 to setup
   clear-all
-  ;; Account shapes
+  ;; Account shapes initialization.
   set-default-shape consumers "circle"
   set-default-shape creators "square"
   set-default-shape bots "lightning"
 
-  ;; Link shape
+  ;; Link shape initialization.
   set-default-shape subs "curved-link"
 
   ifelse (consumer-proportion + creator-proportion + bot-proportion <= 1) [
-    ;; Initializes accounts.
+    ;; Initializes accounts proportions.
     create-consumers (initial-num * consumer-proportion) [
       set interests n-values num-of-interests [random-float 1]
-      update-account-color self
+      set tired false
       set size 2
     ]
     create-creators (initial-num * creator-proportion) [
       set interests n-values num-of-interests [random-float 1]
-      update-account-color self
+      set tired false
       set size 2
     ]
     create-bots (initial-num * bot-proportion) [
-      set interests n-values num-of-interests [random-float 0.5]
+      set interests n-values num-of-interests [0]
       set interests replace-item (random num-of-interests) interests 1
-      update-account-color self
+      set tired false
       set size 3
     ]
 
-    ask subs [
-      set age 0
+    ;;if count turtles < initial-num [
+    ;;  let difference (initial-num - count turtles)
+    ;;  repeat difference [add-new-account]
+    ;;]
+
+    ask turtles [
+      update-account-color self
     ]
 
     ;; Places users in a circular format.
@@ -61,73 +60,64 @@ to setup
   ]
 end
 
-;; Go Procedures
+;; GO PROCEDURE
 ;; -----------------------------------------------------
 
-;; Users make/break connections based on interest level
-;; Connections form with users if interest level >= their own interest level
-;; Connections break with users if interest level < their current interest level
-;; User interests update based off the most "popular" turtle they follow
-;; we ++ the shared interest between the popular and normie turtle, and -- any interests the normal turtle has
-;; ...that popular turtle doesnt share
-;; Maybe if turtle has no followers after certain number of ticks, they "die" (leave the social media service)?
-
 to go
+  ;; Stops if there are no accounts.
   if not any? turtles [
     stop
   ]
 
-  ;; Buffer to add users every X number of ticks.
-  if new-users [
-    if (ticks mod 10 = 0) [
-      add-new-account
-    ]
-  ]
-  ;; User behaviour
+  ;; ACCOUNT BEHAVIOUR
+  ;; -----------------------------------------------------
   ask turtles [
     follow-account self
     unfollow-account self
+    update-interests self
 
-    update-account-color self
+    if sign-up-and-exit [
+      update-tired self
+      update-size self
     ]
-
-  ;; Link behaviour
-  ask subs [ ;; Increment the age of all links.
-    if boredom? [
-      if age > boredom-time [
-        die
-      ]
-      set age (age + 1)
-    ]
-
-    layout-circle sort turtles (world-width / 2 - 2)
-
   ]
 
-  ;; Update interest of all users.
-  update-interest
+  ;; Add/remove users based on chosen rates.
+  if sign-up-and-exit and ticks > 0 [
+    if (ticks mod sign-up-rate = 0) [add-new-account]
+    if (ticks mod exit-rate = 0) [ ask turtles [
+        if tired [die]
+      ]
+    ]
+  ]
+
+  layout-circle sort turtles (world-width / 2 - 2)
 
   tick
 end
 
 
-;; Helper Methods
+;; HELPER METHODS
 ;; -----------------------------------------------------
 
 to add-new-account
   create-turtles 1 [
     let generate random-float 1
-    if generate < 1 / 3 [
-      set breed consumers
-    ]
-    if (generate >= 1 / 3 and generate < 2 / 3) [
-      set breed creators
-    ]
+    if generate < 1 / 3 [set breed consumers]
+    if (generate >= 1 / 3 and generate < 2 / 3) [set breed creators]
+
     if (generate >= 2 / 3) [
       set breed bots
+      set tired false
+      set interests n-values num-of-interests [0]
+      set size 3
     ]
-    set size 2
-    set interests n-values num-of-interests [random-float 1]
+
+    if breed = consumers or breed = creators [
+      set tired false
+      set interests n-values num-of-interests [random-float 1]
+      set size 2
+    ]
 
     ;; New user has one very strong interest.
     set interests replace-item (random num-of-interests) interests 1
@@ -137,11 +127,13 @@ to add-new-account
   ]
 end
 
-to follow-account [account]
+to follow-account [current-account]
   let index random num-of-interests ;; Choose random interest index.
 
-  ask account [
-    let follow-candidates turtles with [(item index [interests] of self) > (item index [interests] of myself) + 0.1]
+  ask current-account [
+    let follow-candidates turtles with [
+      (item index [interests] of self) > (item index [interests] of myself) + 0.05
+    ]
 
     if (any? follow-candidates) [
       create-sub-to one-of follow-candidates [
@@ -153,12 +145,16 @@ to follow-account [account]
 
 end
 
-to unfollow-account [account]
-  let index random num-of-interests ;; Choose random interest index.
+to unfollow-account [current-account]
+  ;; Choose a random interest.
+  let index random num-of-interests
 
-  ask account [
-    let unfollow-candidates out-sub-neighbors with [(item index [interests] of self) <= (item index [interests] of myself) - 0.1]
-
+  ask current-account [
+    ;; Get all subs whose interest strengths are less than mine.
+    let unfollow-candidates out-sub-neighbors with [
+      (item index [interests] of self) <= (item index [interests] of myself) - 0.05
+    ]
+    ;; Flip a coin; if heads, unfollow.
     if (any? unfollow-candidates) [
       ask sub-with one-of unfollow-candidates [
         die
@@ -167,12 +163,10 @@ to unfollow-account [account]
   ]
 end
 
-to update-interest
-  ;; Purpose: Updates the interests of all accounts according to their type.
+to update-interests [current-account]
+  ask current-account [
 
-  ask turtles [
-
-    ;; Averaging of followed accounts.
+    ;; Consumers average the interests of people they're following.
     if (breed = consumers) [
       if any? out-sub-neighbors [
         let average-interests n-values num-of-interests [0]
@@ -183,8 +177,8 @@ to update-interest
       ]
     ]
 
-    ;; Averaging of audience accounts.
-    if breed = creators [
+    ;; Creators average the interest of their audience.
+    if (breed = creators) [
       if any? in-sub-neighbors [
         let average-interests n-values num-of-interests [0]
         ask in-sub-neighbors [
@@ -196,15 +190,13 @@ to update-interest
 
     ;; Bots don't update their interests.
 
-    ;; Update color to reflect new
+    ;; Update color to reflect new interests.
     update-account-color self
   ]
 end
 
 to update-account-color [current-user]
-  ;; Purpose: Updates the color of current-user according to their interests.
-
-  ;; Creates polar vectors equally separated radially in the hue color space.
+  ;; Creates polar vectors equally separated in the hue color space.
   let color-angle map [scalar -> scalar * 360.0 / num-of-interests] (range num-of-interests)
 
   ;; Converts from polar to cartesian.
@@ -216,7 +208,7 @@ to update-account-color [current-user]
     let x-scaled (map * interests x-projection)
     let y-scaled (map * interests y-projection)
 
-    ;; Calculated average vector.
+    ;; Average vector calculation.
     let mean-x mean x-scaled
     let mean-y mean y-scaled
 
@@ -228,7 +220,13 @@ to update-account-color [current-user]
 
     let radius sqrt(mean-x ^ 2 + mean-y ^ 2)
 
-    set color hsb mean-angle (100 * radius) 100
+    ;; Color is subdued if account is tired.
+    let brightness 100
+    if tired [
+      set brightness 50
+    ]
+
+    set color hsb mean-angle (100 * radius) brightness
 
     ask my-in-subs [
       ;; Updates colors of links leading to user.
@@ -236,11 +234,44 @@ to update-account-color [current-user]
     ]
   ]
 end
+
+to update-tired [current-account]
+  ask current-account [
+    ;; If I'm a consumer with no-one I'm following...
+    ;; OR
+    ;; If I'm a creator with no-one following me...
+    ifelse (breed = consumers and count my-out-subs > 3) or (breed = creators and count my-in-subs < 3)
+    ;; ...be tired.
+    [set tired true] [
+      if breed = consumers or breed = creators [set tired false] ;; Second if check necessary because bots will never be tired otherwise.
+    ]
+
+    ;; If I'm a robot and I'm noticed (probabilistic) by moderators...
+    if (breed = bots and random-float 1 < 0.1)
+    ;; ...be marked for banning (tired). This cannot be undone.
+    [set tired true]
+    update-account-color self
+    update-size self
+  ]
+end
+
+;; Updates size of users based on whether they're tired or not.
+to update-size [current-account]
+  ask current-account [
+    if breed = consumers or breed = creators [
+      ifelse tired [set size 1.5] [set size 2]
+    ]
+
+    if breed = bots [
+      ifelse tired [set size 2] [set size 3]
+    ]
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-375
+553
 10
-812
+990
 448
 -1
 -1
@@ -265,10 +296,10 @@ ticks
 30.0
 
 BUTTON
-5
-201
-80
-234
+11
+10
+86
+43
 NIL
 setup
 NIL
@@ -282,40 +313,40 @@ NIL
 1
 
 SLIDER
-6
-10
-179
-43
+11
+50
+184
+83
 initial-num
 initial-num
 10
-100
-40.0
+50
+27.0
 1
 1
 accounts
 HORIZONTAL
 
 SLIDER
-5
-162
-177
-195
+11
+224
+183
+257
 num-of-interests
 num-of-interests
 1
-24
-5.0
+10
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-102
-201
-177
-234
+108
+10
+183
+43
 NIL
 go
 T
@@ -328,97 +359,146 @@ NIL
 NIL
 1
 
-SWITCH
-5
-277
-115
-310
-boredom?
-boredom?
-0
-1
--1000
-
 SLIDER
-5
-314
-177
-347
-boredom-time
-boredom-time
-0
+11
+354
+183
+387
+exit-rate
+exit-rate
+1
 10
-5.0
+8.0
 1
 1
 turns
 HORIZONTAL
 
 SLIDER
-5
-123
-177
-156
+10
+163
+182
+196
 bot-proportion
 bot-proportion
 0
 1
-0.15
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-7
-48
-179
-81
-consumer-proportion
-consumer-proportion
-0
-1
-0.29
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-6
-85
-178
-118
-creator-proportion
-creator-proportion
-0
-1
-0.25
-0.01
-1
-NIL
-HORIZONTAL
-
-TEXTBOX
-190
-11
-370
-191
-- Consumers (🔴) update their interests based on who they're following.\n- Creators (⬛) update their interests based on who's following them.\n- Bots (⚡) have fixed interests.
-16
 0.0
+0.01
 1
+NIL
+HORIZONTAL
+
+SLIDER
+12
+88
+184
+121
+consumer-proportion
+consumer-proportion
+0
+1
+0.09
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+11
+125
+183
+158
+creator-proportion
+creator-proportion
+0
+1
+0.56
+0.01
+1
+NIL
+HORIZONTAL
 
 SWITCH
-5
-239
-118
-272
-new-users
-new-users
+10
+261
+182
+294
+sign-up-and-exit
+sign-up-and-exit
 1
 1
 -1000
+
+SLIDER
+11
+392
+183
+425
+sign-up-rate
+sign-up-rate
+01
+10
+8.0
+1
+1
+turns
+HORIZONTAL
+
+PLOT
+221
+12
+527
+162
+User Population
+Ticks
+# Users
+0.0
+10.0
+0.0
+10.0
+true
+true
+"set-plot-y-range 0 initial-num" ""
+PENS
+"Consumers" 1.0 0 -14439633 true "plot count consumers" "plot count consumers"
+"Creators" 1.0 0 -13345367 true "plot count creators" "plot count creators"
+"Bots" 1.0 0 -2674135 true "plot count bots" "plot count bots"
+
+PLOT
+221
+167
+527
+317
+Average Interests
+Ticks
+Interest Number
+0.0
+10.0
+0.0
+1.0
+true
+true
+"set-plot-y-range 1 (num-of-interests + 1)" ""
+PENS
+"Consumers" 1.0 0 -15040220 true "" "let population-average n-values num-of-interests [0]\n\nask consumers [\n  set population-average (map + population-average interests)\n]\n\nset population-average (map [intensity -> intensity / count consumers] population-average)\n\nif any? consumers [\n  plot mean population-sum / count consumers\n]"
+"Creators" 1.0 0 -14070903 true "" "let population-sum n-values num-of-interests [0]\n\nask creators [\n  let interest-index (range 1 (num-of-interests + 1))\n  let expected-value (map * interests interest-index)\n  set population-sum (map + population-sum expected-value)\n]\n\nifelse any? creators [\n  plot mean population-sum / count creators\n] [\n  plot 0\n]"
+"Bots" 1.0 0 -2674135 true "" "let population-sum n-values num-of-interests [0]\n\nask bots [\n  let interest-index (range 1 (num-of-interests + 1))\n  let expected-value (map * interests interest-index)\n  set population-sum (map + population-sum expected-value)\n]\n\nifelse any? bots [\n  plot mean population-sum / count bots\n] [\n  plot 0\n]"
+
+SLIDER
+10
+317
+182
+350
+unfollow-rate
+unfollow-rate
+1
+10
+8.0
+1
+1
+turns
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -428,6 +508,12 @@ new-users
 ## HOW IT WORKS
 
 (what rules the agents use to create the overall behavior of the model)
+
+- Consumers (🔴) update their interests based on who they're following.
+- Creators (⬛) update their interests based on who's following them.
+- Bots (⚡) have fixed interests.
+
+
 
 ## HOW TO USE IT
 
@@ -821,8 +907,7 @@ curved-link
 link direction
 true
 0
-Line -7500403 true 150 150 90 180
-Line -7500403 true 150 150 210 180
+Polygon -7500403 true true 150 150 75 270 150 225 225 270 150 150
 @#$#@#$#@
 0
 @#$#@#$#@
