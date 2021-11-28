@@ -336,7 +336,7 @@ num-of-interests
 num-of-interests
 1
 10
-2.0
+3.0
 1
 1
 NIL
@@ -470,35 +470,20 @@ PLOT
 167
 527
 317
-Average Interests
-Ticks
-Interest Number
+Max-Strength Interest
+Interest #
+Tally
 0.0
 10.0
 0.0
 1.0
 true
 true
-"set-plot-y-range 1 (num-of-interests + 1)" ""
+"set-plot-x-range 1 (num-of-interests + 1)" ""
 PENS
-"Consumers" 1.0 0 -15040220 true "" "let population-average n-values num-of-interests [0]\n\nask consumers [\n  set population-average (map + population-average interests)\n]\n\nset population-average (map [intensity -> intensity / count consumers] population-average)\n\nif any? consumers [\n  plot mean population-sum / count consumers\n]"
-"Creators" 1.0 0 -14070903 true "" "let population-sum n-values num-of-interests [0]\n\nask creators [\n  let interest-index (range 1 (num-of-interests + 1))\n  let expected-value (map * interests interest-index)\n  set population-sum (map + population-sum expected-value)\n]\n\nifelse any? creators [\n  plot mean population-sum / count creators\n] [\n  plot 0\n]"
-"Bots" 1.0 0 -2674135 true "" "let population-sum n-values num-of-interests [0]\n\nask bots [\n  let interest-index (range 1 (num-of-interests + 1))\n  let expected-value (map * interests interest-index)\n  set population-sum (map + population-sum expected-value)\n]\n\nifelse any? bots [\n  plot mean population-sum / count bots\n] [\n  plot 0\n]"
-
-SLIDER
-10
-317
-182
-350
-unfollow-rate
-unfollow-rate
-1
-10
-8.0
-1
-1
-turns
-HORIZONTAL
+"Consumers" 1.0 1 -15040220 true "" "let interest-tally []\n\nask consumers [\n  let max-strength (max interests)\n  if member? max-strength interests [\n    let max-interest (position max-strength interests) + 1\n    set interest-tally lput max-interest interest-tally\n  ]\n]\n\nask creators [\n  let max-strength (max interests)\n  if member? max-strength interests [\n    let max-interest (position max-strength interests) + 1\n    set interest-tally lput max-interest interest-tally\n  ]\n]\n\nask bots [\n  let max-strength (max interests)\n  if member? max-strength interests [\n    let max-interest (position max-strength interests) + 1\n    set interest-tally lput max-interest interest-tally\n  ]\n]\n\nhistogram interest-tally"
+"Creators" 1.0 1 -14070903 true "" "let interest-tally []\n\nask creators [\n  let max-strength (max interests)\n  if member? max-strength interests [\n    let max-interest (position max-strength interests) + 1\n    set interest-tally lput max-interest interest-tally\n  ]\n]\n\nask bots [\n  let max-strength (max interests)\n  if member? max-strength interests [\n    let max-interest (position max-strength interests) + 1\n    set interest-tally lput max-interest interest-tally\n  ]\n]\n\nhistogram interest-tally"
+"Bots" 1.0 1 -2674135 true "" "let interest-tally []\n\nask bots [\n  let max-strength (max interests)\n  if member? max-strength interests [\n    let max-interest (position max-strength interests) + 1\n    set interest-tally lput max-interest interest-tally\n  ]\n]\n\nhistogram interest-tally"
 
 SLIDER
 11
@@ -520,7 +505,7 @@ TEXTBOX
 326
 537
 496
-Consumers (🔴), who update their interests based on who they’re following.\nCreators (⬛), who update their interests based on who’s following them.\nBots (⚡), who have fixed interests.
+Consumers (🔴) update their interests based on who they’re following.\nCreators (⬛) update their interests based on who’s following them.\nBots (⚡) have fixed interests and do not update them.
 14
 0.0
 1
@@ -540,20 +525,23 @@ All users follow and unfollow another user on the platform every tick. To visual
 
 ## HOW IT WORKS
 
-Each user has a set of interests, which is a randomly generated list of floats from 0.0 to 1.0 representing the strength of that particular interest. Users also have an internal TIRED boolean, which indicates whether an account would like to leave the platform or not. This is only used if SIGN-UP-AND-EXIT is enabled.
+Each user has a set of interests, which is a randomly generated list of floats from 0.0 to 1.0 representing the strength of that particular interest. 
+Users also have an internal TIRED boolean, which indicates whether an account would like to leave the platform or not. This is only used if SIGN-UP-AND-EXIT is enabled.
 
-Every tick, users follow/unfollow other users on the platform, then update their interests depending on their ruleset. Creators update their interests based on who's following them, consumer's update their interests based on who they're following, and bots do not change their interests at all.
+Every tick, users follow/unfollow other users on the platform, then update their interests depending on their ruleset. 
+Creators update their interests based on who's following them, consumer's update their interests based on who they're following, and bots do not change their interests at all.
 
-To follow another user, a user selects one of the interests from their list randomly, then searches for other users on the platform who have a greater intensity in that interest. The user then follows one of the people who they've found who have a greater intensity in that interest.
+To follow another user, a user selects one of the interests from their list randomly, then searches for other users on the platform who have a greater intensity in that interest. 
+The user then follows one of the people they've found who have a greater intensity in that interest.
 
 To unfollow another user, similar logic applies: a user selects one of their interests at random, and investigates the accounts they're currently following. If the interest of one of those accounts is <= the user's interest intensity, the user unfollows that account. 
 
-To update the user's interests based on who they're followed by (Creators) or are following (Consumers), we average out the collective interests of the accounts a user is influenced by. The user's interests are then increased/decreased by this average intensity. TODO - needs clearer language/more accurate detailing
+To update the user's interests based on who they're followed by (Creators) or are following (Consumers), we average out the collective interests of the accounts a user is influenced by. The user's interests are then set to this average intensity list.
 
-To update the user's color based on their interests, we utilize the color wheel present in many HSB models of color, and divide up the wheel into sections depending on how many interests we need to represent. Each interest is mapped to a section of the wheel, and each user is given a color according to the weighted average of their interests as mapped on the wheel. TODO - think I worded this correctly? Needs proof-reading
+To update the user's color based on their interests, we utilize the HUE wheel in NetLogo's HSB model, and divide up the wheel into sections depending on how many interests we need to represent. 
+Each interest is mapped to the color of each section, and each user is given a final color according to the weighted average of their interests as mapped on this wheel.
 
 If SIGN-UP-AND-EXIT is enabled, a few more factors are at play. Every tick, we also ask the user if they're tired, and update their size based on if they're tired to visually represent that a particular user is likely to leave the platform. Every SIGN-UP-RATE amount of ticks, we add a user to the platform, and every EXIT-RATE amount of ticks, users who are tired of the platform leave. 
-
 
 
 ## HOW TO USE IT
@@ -567,8 +555,6 @@ MIN-SUBS is the minimum amount of links a user can have before they become tired
 
 SIGN-UP-AND-EXIT allows new users to sign up every SIGN-UP-RATE ticks, and exit the platform every EXIT-RATE ticks that pass.
 
-UNFOLLOW-RATE TODO -- is this variable used? Can't find it
-
 
 ## THINGS TO NOTICE
 
@@ -578,8 +564,8 @@ UNFOLLOW-RATE TODO -- is this variable used? Can't find it
 
 - Some users may grow tired of the platform, then decide against it later. Do these users usually last in comparison to their peers?
 
-- The Average Interests graph plots out the intensity of each interest among users, but the one user type who's interests never vary are the bots. The graph shows fluctuations in bot interest when SIGN-UP-AND-EXIT is enabled -- why does this occur?
-TODO -- This graph is subject to change, may scrap this bullet point later
+- The Max-Strength Interest histogram is a frequency histogram of the strongest interest among all users. 
+
 
 ## THINGS TO TRY
 
@@ -953,7 +939,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.0
+NetLogo 6.2.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
