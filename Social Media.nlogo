@@ -598,7 +598,10 @@ Netlogo Model Library:
 
 ## CREDITS AND REFERENCES
 
-N/A as of now TODO -- maybe we thank Dr. Murphy lol this was a good learning experience
+Created by: Vi Hamidi, Lila Zayed, Abigail Deewaard, Thomas Ryner
+
+
+Thank you to Dr. Murphy at Northern Illinois University for allowing us the opportunity to work on this project!
 @#$#@#$#@
 default
 true
@@ -939,7 +942,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.2.1
+NetLogo 6.2.0
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
